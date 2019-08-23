@@ -144,11 +144,11 @@ FilterExprNode *filter_len_gele_new(int min, int max);
 
 ### `filter-length.c`
 
-Filter function classes inherit from `FilterExprNode`. `FilterExprNode` has virtual methods `init`, `free_fn`, and `eval`. The main functionality of filter functions is contained in `eval`; it is what determines if a log message passes the filter or not.
+Filter function classes inherit from `FilterExprNode`. `FilterExprNode` has abstract methods `init` and `free_fn` (which do what you would expect), and `eval`. `eval` is where the main functionality of filter functions is implemented; it is what determines if a log message passes the filter or not.
 
-The reason why filter functions are "expression nodes" is because a filter expression is made up of one or more filter functions, connected by logical operators. So, when a filter expression is parsed, it gets represented as a `FilterExprNode` binary tree, to make calculating the result simple (this is all handled by the existing code and we don't need to do anything special when implementing our filter functions).
+The reason why filter functions are "expression nodes" is because a filter expression is made up of one or more filter statements, connected by logical operators. So, when a filter expression is parsed, it gets represented as a `FilterExprNode` binary tree, to make calculating the result simple (this is all handled by the existing code in `lib/filter/` and we don't need to do anything special in our implementation).
 
-We need to create two classes for `filter-length`: one for single length comparisons and one for range-based comparisons.
+We need to create two filter function classes for `filter-length`: one for single length comparisons and one for range-based comparisons.
 ```
 #include "filter-length.h"
 
@@ -166,7 +166,7 @@ typedef struct _FilterLengthRange
 } FilterLengthRange;
 ```
 
-We use a macro function to generate the code needed for our filter functions since for each type (single and range) the thing that changes is the comparison operator used.
+We use a macro function to generate the code needed for our filter functions since for each type (single and range) the only thing that changes is the comparison operator used.
 
 First we have the `new` function for our single comparison filter functions. Our filter function does not have anything that needs to be initialised, nor any fields that use dynamic memory, so we only implement and set the `eval` function, not `init` or `free_fn`.
 ```
@@ -274,7 +274,7 @@ IMPLEMENT_FILTER_LEN_RANGE(gele, >=, <=)
 TestSuite(filter, .init = setup, .fini = teardown);
 ```
 
-Because our filter functions always have the same input and output structure, we will use parameterized tests (from Criterion). There is one for each of our filter functions, but for this guide we will just look at the test for a single comparison filter function.
+Because our filter functions always have the same input and output structure, we will use Criterion's parameterized tests. There is one for each of our filter functions, but for this guide we will just look at the test for a single comparison filter function.
 ```
 #include "filter/filter-expr.h"
 #include "filter/filter-length.h"
