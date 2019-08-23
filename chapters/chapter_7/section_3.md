@@ -196,7 +196,7 @@ ordered_parser_new(GlobalConfig *cfg)
   return &self->super;
 }
 ```
-The next three blocks here deal with flag handling. Note that this plugin does not actually make use of the flags; they are just here for the purpose of this guide. But the flags field is just a standard bitfield, so it can be used as usual (nothing specific to syslog-ng).
+The next three blocks here deal with flag handling. Note that this plugin does not actually make use of the flags; they are just here for the purpose of this guide. But the flags field is just a standard bit field, so it can be used as usual (nothing specific to syslog-ng).
 
 First we define constants for each flag, assigning the `letters` flag to the first bit and `numbers` the second.
 ```
