@@ -224,24 +224,24 @@ This fact allows us to access the members of an object's superclasses with the d
 /* Root class */
 typedef Animal_
 {
-	gint weight;
-	gint volume;
-	gint age;
+  gint weight;
+  gint volume;
+  gint age;
 } Animal;
 
 /* Subclass of Animal */
 typedef Canine_
 {
-	Animal super;
-	void (*wag_tail)(gint duration);
-	void (*bark)(gint loudness);
+  Animal super;
+  void (*wag_tail)(gint duration);
+  void (*bark)(gint loudness);
 } Canine;
 
 /* Subclass of Canine and Animal */
 typedef Dog_
 {
-	Canine super;
-	Human *owner;
+  Canine super;
+  Human *owner;
 } Dog;
 ```
 
