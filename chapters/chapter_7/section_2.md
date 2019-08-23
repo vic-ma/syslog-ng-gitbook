@@ -129,7 +129,7 @@ source_static_file_options
   ;
 ```
 
-`threaded_source_driver_option` is a standard option for threaded source drivers.
+`threaded_source_driver_option` is a standard option to include for threaded source drivers.
 ```
 source_static_file_option
   : threaded_source_driver_option
@@ -217,9 +217,12 @@ sfr_free(StaticFileReader *self)
 
 ### `static-file.h`
 
-`static-file.c` is our main file; it implements the static-file source driver. This is its header file.
+There are various ways of implementing a source driver. The one we will use is based on `LogThreadedFetcherDriver`. That is to say, we will implement a class that extends `LogThreadedFetcherDriver`. The abstract methods that we inherit from this class are:
+* `connect`, which establishes a connection between the source driver and the actual source of the log messages. In this case the source is a static text file, and so establishing this connection means opening the file.
+* `disconnect`, which severs the connection between the source driver and source. In this case it means closing the file.
+* `fetch`, which is a method that is automatically called to get and return new log mssages from the source.
 
-There are various ways of implementing a source driver. The one we will use is based on `LogThreadedFetcherDriver`, which has a `fetch` method that gets called automatically to get new data from the driver. It is a based on `LogThreadedSoruceDriver`, which allows for more control by giving access to `run`, which allows for control over when and how `LogMessage` are sent. This is in turn based on `LogSrcDriver`, which has a more complicated implementation process, since it takes away the abstractions that the threaded source drivers offer.
+The class that `LogThreadedFetcherDriver` is a based on, `LogThreadedSoruceDriver`, allows for more control by giving access to an abstract method `run`, which allows for control over how and when the `LogMessage` are sent. This is in turn based on `LogSrcDriver`, which has a more complicated implementation process, since it takes away the abstractions that the threaded source drivers offer.
 
 See [here](https://github.com/balabit/syslog-ng/pull/2247) for more information on threaded source drivers.
 ```
@@ -282,7 +285,13 @@ _open_file(LogThreadedFetcherDriver *s)
   StaticFileSourceDriver *self = (StaticFileSourceDriver *) s;
   return sfr_open(self->reader, self->pathname);
 }
+```
 
+Here is our implementation of the `fetch` method. It's job is to get and return a new log message from the source each time it is called, or state that there are no more log messages remaining. The type of the return value is a `LogThreadedFetchResult`, which is just a `LogMessage` with a status code at the beginning. This can be one of three things:
+* `THREADED_FETCH_SUCCESS`, to indicate a successful message.
+* `THREADED_FETCH_NOT_CONNECTED`, to indicate the connection to the source is no longer working.
+* `THREADED_FETCH_ERROR`, to indicate an error has occured.
+```
 static LogThreadedFetchResult
 _fetch_line(LogThreadedFetcherDriver *s)
 {
@@ -320,6 +329,4 @@ _free(LogPipe *s)
 
   log_threaded_fetcher_driver_free_method(s);
 }
-
-
 ```
