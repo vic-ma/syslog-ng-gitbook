@@ -209,7 +209,7 @@ CFG_PARSER_IMPLEMENT_LEXER_BINDING(affile_, LogDriver **)
 
 ## OOP in C
 
-Syslog-ng is written in C but simulates some object-oriented programming features. It is important to know how this is done, before going into plugin programming.
+Syslog-ng is written in C but simulates some object-oriented programming features. It is important to know a bit about how this is done, before going into plugin programming.
 
 Structs are used to represent classes. The first field of any struct that represents a subclass is `super`. The type of `super` is the struct that represents the superclass. This type is not a pointer.
 
@@ -268,4 +268,4 @@ Animal dog_as_animal = (Animal) my_dog;
 gint dog_weight = dog_as_animal.weight;
 ```
 
-The details of abstraction, like implementing and overriding abstract methods, and other things like default method implementations and constructor-like functionality are better understood in the context of plugins, and will be learned as you read and work with syslog-ng code.
+These are the basics of how syslog-ng uses OOP, but there is much more to know. For example, how abstraction (abstract and virtual methods) and constructors (constructor chaining), work. These things are best understood by reading and working with actual syslog-ng code. They will be covered in the next section (source drivers) and so it is recommended that you read it even if you do not plan on making a source driver.
