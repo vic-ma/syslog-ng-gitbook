@@ -268,4 +268,4 @@ Animal dog_as_animal = (Animal) my_dog;
 gint dog_weight = dog_as_animal.weight;
 ```
 
-The details of abstraction, like implementing and overriding abstract methods, and other things like default method implementations and constructor-like functionality are better understood in the context of plugins, so we will not cover them here.
+The details of abstraction, like implementing and overriding abstract methods, and other things like default method implementations and constructor-like functionality are better understood in the context of plugins, and will be learned as you read and work with syslog-ng code.
