@@ -209,16 +209,16 @@ CFG_PARSER_IMPLEMENT_LEXER_BINDING(affile_, LogDriver **)
 
 ## OOP in C
 
-Syslog-ng is written in C but simulates some object-oriented programming features. It is important to know how this is done before going into plugin programming.
+Syslog-ng is written in C but simulates some object-oriented programming features. It is important to know how this is done, before going into plugin programming.
 
 Structs are used to represent classes. The first field of any struct that represents a subclass is `super`. The type of `super` is the struct that represents the superclass. This type is not a pointer.
 
-The result of making `super` the first field and not a pointer is that an object will always be stored in a contiguous block of memory, with data for its superclasses being ordered from most abstract to least, from the start of the memory block. If `C` inherits from `B` inherits from `A`, the memory layout of a `C` object would look like:
+The result of making `super` the first field and not a pointer is that an object will have all the data for it and its superclasses stored in one contiguous block of memory, ordered from most abstract to the least. If `C` inherits from `B` inherits from `A`, the memory layout of a `C` object would look like:
 ```
 [[[Members for A] Members for B] Members for C]
 ```
 
-As a result of this, we can access the members of an object's superclasses with the dot operator, which allows for inheritence. We can also convert between classes with casts, which allows for polymorphism. Let's take a look at both these things with an example.
+This fact allows us to access the members of an object's superclasses with the dot operator, which allows for inheritence. We can also convert between classes with casts, which allows for polymorphism. Let's take a look at both these things with an example.
 
 ```
 /* Root class */
@@ -244,17 +244,7 @@ typedef Dog_
 	Human *owner;
 } Dog;
 ```
-Converting between superclasses and subclasses:
-```
-/* Assume this works */
-Dog my_dog = new_dog();
 
-/* Casting Dog into Animal */
-Animal dog_as_animal = (Animal) my_dog;
-
-/* Treating Dog as Animal */
-gint dog_weight = dog_as_animal.weight;
-```
 Accessing inherited members:
 ```
 /* Assume both age and bark are initialised */
@@ -266,4 +256,16 @@ gint dog_age = my_dog.super.super.age;
 my_dog.super.bark();
 ```
 
-The details of abstraction, like implementing and overriding abstract methods, and related things like default method implementations and constructor-like functionality is better understood in the context of plugins.
+Converting between superclasses and subclasses:
+```
+/* Assume this works */
+Dog my_dog = new_dog();
+
+/* Casting Dog into Animal */
+Animal dog_as_animal = (Animal) my_dog;
+
+/* Treating Dog as Animal */
+gint dog_weight = dog_as_animal.weight;
+```
+
+The details of abstraction, like implementing and overriding abstract methods, and other things like default method implementations and constructor-like functionality are better understood in the context of plugins, so we will cover them in the following plugin guide section.
