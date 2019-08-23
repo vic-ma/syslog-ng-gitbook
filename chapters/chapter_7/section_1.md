@@ -44,7 +44,7 @@ Syslog-ng needs a list of the module's plugins, in the form of `Plugin` objects,
 When the syslog-ng parser encounters `name` inside a context/block of the type, `type`, it will use `parser` to parse the block.
 ```
 source s_local {
-		file("/var/log/syslog");
+    file("/var/log/syslog");
 };
 ```
 The syslog-ng parser sees that it is inside a source context/block (`LL_CONTEXT_SOURCE`), and finds the string `file`, so it uses the parser for that plugin, which is `affile_parser`, to parse the configuration block.
