@@ -268,4 +268,4 @@ Animal dog_as_animal = (Animal) my_dog;
 gint dog_weight = dog_as_animal.weight;
 ```
 
-The details of abstraction, like implementing and overriding abstract methods, and other things like default method implementations and constructor-like functionality are better understood in the context of plugins, so we will cover them in the following plugin guide section.
+The details of abstraction, like implementing and overriding abstract methods, and other things like default method implementations and constructor-like functionality are better understood in the context of plugins, so we will not cover the, here.
