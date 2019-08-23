@@ -260,7 +260,7 @@ Here is the implementation of the `process` function for `ordered-parser`. It ge
 
 To actually extract the correct keys and values from the input string, we need to use a scanner, which will do the hard work of parsing the text of `input` to give us the appropriate key-value pairs. Then, all this function has to do is add these key-value pairs into the `LogMessage`. Normally we would need to write a scanner from scratch, but since the functionality of ordered-parser is essentially a subset of the functionality of kv-parser, we will use the kv-parser's scanner, `KVScanner`. Scanners are held under `lib/scanner/`.
 
-It is important to note that parsers do not need to use scanners (for example, the date parser does not). It is just that scanners are often used.
+It is important to note that although scanners are often used, they are not required (the date parser does not use it, for example). The `process` does not care how the input is parsed.
 ```
 static gboolean
 _process(LogParser *s, LogMessage **pmsg, const LogPathOptions *path_options,
