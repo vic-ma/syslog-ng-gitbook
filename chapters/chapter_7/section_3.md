@@ -3,7 +3,7 @@
 This section will guide you through the process of creating a parser plugin, by going through the files of `ordered-parser`, which parses an ordered list by creating macros for each item in the list.
 
 For example:
-`A) Apple B) Banana C) Cherry -> $A="Apple", $B="Banana, $C="Cherry"`
+`A) Apple B) Banana C) Cherry -> ${A}="Apple", ${B}="Banana, ${C}="Cherry"`
 
 This parser supports one option, `suffix`, which lets the user choose what suffix their ordered lists use (`A) B) C)` vs. `A: B: C:`).
 
@@ -152,7 +152,10 @@ parser_ordered_flags
 #define ORDERED_PARSER_H_INCLUDED
 
 #include "parser/parser-expr.h"
+```
 
+Parser classes inherit from `LogParser`, which has an abstract method `process`. `process` is where a parser's main functionality is implemented; it is the function that does all the parsing.
+```
 typedef struct _OrderedParser
 {
   LogParser super;
@@ -182,17 +185,18 @@ ordered_parser_new(GlobalConfig *cfg)
   /* Standard init method for parsers */
   log_parser_init_instance(&self->super, cfg);
 
+  /* Set abstract methods */
   self->super.process = _process;
   self->super.super.clone = _clone;
 
-  /* Set defaults */
+  /* Set default options */
   self->suffix = ')';
   self->flags = 0x0000;
 
   return &self->super;
 }
 ```
-The next three blocks here deal with flag handling. Note that this plugin does not actually make use of the flags; they are just here for the purpose of this guide. But our flags field is just a standard bitfield so there is nothing special about using it.
+The next three blocks here deal with flag handling. Note that this plugin does not actually make use of the flags; they are just here for the purpose of this guide. But the flags field is just a standard bitfield, so it can be used as usual (nothing specific to syslog-ng).
 
 First we define constants for each flag, assigning the `letters` flag to the first bit and `numbers` the second.
 ```
@@ -203,11 +207,11 @@ enum
 };
 ```
 
-We will create a `CfgFlagHandler` for each flag; this makes the process of flag handling easier. The fields for a `CfgFlagHandler` are as follows:
+We create an array of `CfgFlagHandler` objects—one for each flag. This makes the process of flag handling easier. The fields of `CfgFlagHandler` are as follows:
 
 1. The name of the flag, which is what the user would type into their config file to use the flag.
 2. The operation type, or what operation should be performed when the flag is used. This is either `CFH_SET`, which means to set (one) the bit, or `CFH_CLEAR`, which means to clear (zero) the bit.
-4. The location of the `flags` field relative to the parser. This is needed because only the parser is passed into the `cfg_process_flag` function which sets/unsets the flags.
+4. The location of the `flags` field relative to the parser. This is needed because eventually, only the parser is passed into the `cfg_process_flag` function so it needs to know how to find `flags`.
 5. The constant value for the flag; the location of the bit to manipulate.
 ```
 CfgFlagHandler ordered_parser_flag_handlers[] =
@@ -218,7 +222,7 @@ CfgFlagHandler ordered_parser_flag_handlers[] =
 };
 ```
 
-This is the function called by from our grammar file to set the flags and we in turn call the `cfg_process_flag` to do the actual flag setting.
+This is the function called from our grammar file to set the flags. We call `cfg_process_flag` to do the actual flag setting.
 ```
 gboolean
 ordered_parser_process_flag(LogParser *s, const gchar *flag)
@@ -252,11 +256,11 @@ _format_input(const gchar *input, gchar suffix)
 }
 ```
 
-The main functionality of parsers lies in their `_process` functions. It gets called when a message needs to be parsed. The function takes in a string `input`, and returns the parsed `LogMessage` through `pmsg`. To parse the input means to add the appropriate key-value pairs to the `LogMessage`; these result in macros the user can use.
+Here is the implementation of the `process` function for `ordered-parser`. It gets called when a message needs to be parsed. The function takes in a string `input`, and returns the parsed `LogMessage` through `pmsg`. To parse the input means to add the appropriate key-value pairs to the `LogMessage`; these result in macros the user can use.
 
-To actually extract the correct keys and values from the input string, we will use a scanner (found under `lib/scanner/`). Normally we would need to write one from scratch, but since the functionality of ordered-parser is essentially a subset of the functionality of kv-parser, we will use the kv-parser's scanner, `KVScanner`.
+To actually extract the correct keys and values from the input string, we need to use a scanner, which will do the hard work of parsing the text of `input` to give us the appropriate key-value pairs. Then, all this function has to do is add these key-value pairs into the `LogMessage`. Normally we would need to write a scanner from scratch, but since the functionality of ordered-parser is essentially a subset of the functionality of kv-parser, we will use the kv-parser's scanner, `KVScanner`. Scanners are held under `lib/scanner/`.
 
-It is important to note that parsers do not need to use scanners (for example, the date parser does not). It is just that scanners are often used. As a result of this, scanners do not *have* to be implemented in any specific way, however it would be wise to keep the standard when writing a new one.
+It is important to note that parsers do not need to use scanners (for example, the date parser does not). It is just that scanners are often used.
 ```
 static gboolean
 _process(LogParser *s, LogMessage **pmsg, const LogPathOptions *path_options,
@@ -294,7 +298,7 @@ Next we have the main parsing loop. It tells the scanner to move on to the next 
 }
 ```
 
-Finally we need to implement the clone function, which is called when the same parser is used in multiple log paths.
+Finally we need to implement the clone function, which is called when the same parser is used in multiple log paths. This abstract function is inherited from `LogPipe`.
 ```
 static LogPipe *
 _clone(LogPipe *s)
