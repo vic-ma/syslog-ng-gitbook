@@ -1,8 +1,8 @@
 # Filter Function
 
-This section will guide you through the process of creating a filter function, by going through the files of filter-length, a set of filter functions which filter log messages based on the length of their `${MESSAGE}`. `${MESSAGE}` refers to the syslog-ng macro and not the MSG part defined by the syslog protocols.
+This section will guide you through the process of creating a filter function, by going through the files of filter-length, a set of filter functions which filter log messages based on the length of their `${MESSAGE}`. `${MESSAGE}` refers to the syslog-ng macro and not MSG as defined by the syslog protocols.
 
-Filter functions are written under `lib/filter/`, and so they do not belong to a module and are not technically plugins. To add a filter function we only need to modify the parser and grammar files; there is no plugin file.
+Filter functions are written under `lib/filter/`, and so they do not belong to any module and are not technically plugins. To add a filter function we only need to modify the parser and grammar files; there is no plugin file.
 
 ### `filter-expr-parser.c`
 
