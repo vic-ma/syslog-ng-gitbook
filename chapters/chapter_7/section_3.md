@@ -113,9 +113,11 @@ parser_ordered_opts
     ;
 ```
 
-Here we implement `parser_opt`, which is a standard option to include for parsers.
+Here we add an option for flags (which are handled in the next block).
 
-However, since ordered-parser supports the `suffix` option, we need to implement that too. We first make two calls to the `CHECK_ERROR` macro, to make sure the input is a valid suffix. Then we call our setter function.
+Since ordered-parser supports the `suffix` option, we need to implement that too. We first make two calls to the `CHECK_ERROR` macro, to make sure the input is a valid suffix. Then we call our setter function.
+
+Finally, we add `parser_opt`, which is a standard option to include for parsers.
 ```
 parser_ordered_opt
     : KW_FLAGS  '(' parser_ordered_flags ')'
@@ -130,7 +132,7 @@ parser_ordered_opt
     ;
 ```
 
-Ordered-parser also supports two flags, so we implement the flag option here by calling our flag processing function.
+Ordered-parser supports two flags, so we implement the flag option here by calling our flag processing function.
 ```
 parser_ordered_flags
     : string parser_ordered_flags
@@ -154,7 +156,7 @@ parser_ordered_flags
 #include "parser/parser-expr.h"
 ```
 
-Parser classes inherit from `LogParser`, which has an abstract method `process`. `process` is where a parser's main functionality is implemented; it is the function that does all the parsing.
+Parser classes extend `LogParser`, which has an abstract method `process`. `process` is where a parser's main functionality is implemented; it is the function that does the parsing.
 ```
 typedef struct _OrderedParser
 {
@@ -185,7 +187,7 @@ ordered_parser_new(GlobalConfig *cfg)
   /* Standard init method for parsers */
   log_parser_init_instance(&self->super, cfg);
 
-  /* Set abstract methods */
+  /* Set methods */
   self->super.process = _process;
   self->super.super.clone = _clone;
 
@@ -196,7 +198,7 @@ ordered_parser_new(GlobalConfig *cfg)
   return &self->super;
 }
 ```
-The next three blocks here deal with flag handling. Note that this plugin does not actually make use of the flags; they are just here for the purpose of this guide. But the flags field is just a standard bit field, so it can be used as usual (nothing specific to syslog-ng).
+The next three blocks here deal with flag handling. Note that this plugin does not actually make use of the flags; they are just here for the purpose of this guide. But the flags field is just a standard bit field, so there is nothing special about using it.
 
 First we define constants for each flag, assigning the `letters` flag to the first bit and `numbers` the second.
 ```
@@ -207,11 +209,11 @@ enum
 };
 ```
 
-We create an array of `CfgFlagHandler` objects—one for each flag. This makes the process of flag handling easier. The fields of `CfgFlagHandler` are as follows:
+We create an array of `CfgFlagHandler` objects—one for each flag. With these we will be able to use the `cfg_process_flag` method, which will take care of the bit manipulation for us. The fields of `CfgFlagHandler` are as follows:
 
 1. The name of the flag, which is what the user would type into their config file to use the flag.
 2. The operation type, or what operation should be performed when the flag is used. This is either `CFH_SET`, which means to set (one) the bit, or `CFH_CLEAR`, which means to clear (zero) the bit.
-4. The location of the `flags` field relative to the parser. This is needed because eventually, only the parser is passed into the `cfg_process_flag` function so it needs to know how to find `flags`.
+4. The location of the `flags` field relative to the parser. This is needed because only the parser is passed into the `cfg_process_flag`, function so it needs to know where to find `flags`.
 5. The constant value for the flag; the location of the bit to manipulate.
 ```
 CfgFlagHandler ordered_parser_flag_handlers[] =
@@ -222,7 +224,7 @@ CfgFlagHandler ordered_parser_flag_handlers[] =
 };
 ```
 
-This is the function called from our grammar file to set the flags. We call `cfg_process_flag` to do the actual flag setting.
+This is the function called from our grammar file to set the flags. Because we have the flag handlers, we can use `cfg_process_flag` to do all the actual flag setting.
 ```
 gboolean
 ordered_parser_process_flag(LogParser *s, const gchar *flag)
@@ -256,11 +258,11 @@ _format_input(const gchar *input, gchar suffix)
 }
 ```
 
-Here is the implementation of the `process` function for `ordered-parser`. It gets called when a message needs to be parsed. The function takes in a string `input`, and returns the parsed `LogMessage` through `pmsg`. To parse the input means to add the appropriate key-value pairs to the `LogMessage`; these result in macros the user can use.
+Here is the implementation of the `process` function for `ordered-parser`. `process` is called when a message needs to be parsed. The function takes in a string `input`, which is the message to parse, and returns the parsed `LogMessage` through `pmsg`. To parse the input means to add the appropriate key-value pairs to the returned `LogMessage`; these result in macros the user can use.
 
-To actually extract the correct keys and values from the input string, we need to use a scanner, which will do the hard work of parsing the text of `input` to give us the appropriate key-value pairs. Then, all this function has to do is add these key-value pairs into the `LogMessage`. Normally we would need to write a scanner from scratch, but since the functionality of ordered-parser is essentially a subset of the functionality of kv-parser, we will use the kv-parser's scanner, `KVScanner`. Scanners are held under `lib/scanner/`.
+To actually extract the correct keys and values from the input string, we need to use a scanner, which will parse the text of `input` to give us the appropriate key-value pairs. Then, this function can just add these key-value pairs into `pmsg`. Normally we would need to write a scanner from scratch, but since the functionality of ordered-parser is essentially a subset of the functionality of kv-parser, we will use the kv-parser's scanner, `KVScanner`. Scanners can be found in `lib/scanner/`.
 
-It is important to note that although scanners are often used, they are not required (the date parser does not use it, for example). The `process` does not care how the input is parsed.
+It is important to note that parsers do not require the use of a scanner (the date parser, for example, does not use one). However, scanners are often used.
 ```
 static gboolean
 _process(LogParser *s, LogMessage **pmsg, const LogPathOptions *path_options,
@@ -284,7 +286,7 @@ _process(LogParser *s, LogMessage **pmsg, const LogPathOptions *path_options,
             evt_tag_printf("msg", "%p", *pmsg));
 ```
 
-Next we have the main parsing loop. It tells the scanner to move on to the next element, and then get the key and value of that element. After, we add the key-value pair as a macro by calling the `log_msg_set_value_by_name` function.
+Next we have the main parsing loop. It tells the scanner to move on to the next element, and then get the key and value of that element. After, we add the key-value pair to `pmsg` by calling the `log_msg_set_value_by_name` function.
 ```
   while (kv_scanner_scan_next(&kv_scanner))
     {
@@ -298,7 +300,7 @@ Next we have the main parsing loop. It tells the scanner to move on to the next 
 }
 ```
 
-Finally we need to implement the clone function, which is called when the same parser is used in multiple log paths. This abstract function is inherited from `LogPipe`.
+Finally we need to implement the clone function, which is called when the same parser is used in multiple log paths.
 ```
 static LogPipe *
 _clone(LogPipe *s)
