@@ -20,7 +20,6 @@ CFG_PARSER_DECLARE_LEXER_BINDING(static_file_, LogDriver **)
 
 ### `static-file-parser.c`
 
-We add a keyword for declaring the use of our plugin.
 ```
 #include "driver.h"
 #include "cfg-parser.h"
@@ -29,7 +28,10 @@ We add a keyword for declaring the use of our plugin.
 extern int static_file_debug;
 
 int static_file_parse(CfgLexer *lexer, LogDriver **instance, gpointer arg);
+```
 
+We add a keyword for declaring the use of our plugin.
+```
 static CfgLexerKeyword static_file_keywords[] =
 {
   { "example_static_file", KW_STATIC_FILE },
@@ -99,17 +101,25 @@ We declare the grammar rules as pointer types.
 %type <ptr> source_static_file_params
 
 %%
+```
 
+The rule here says that we find a `static-file` declaration inside a source block.
+```
 start
   : LL_CONTEXT_SOURCE source_static_file  { YYACCEPT; }
   ;
+```
 
+This rule says that a `static-file` declaration is made up of the `static-file` keyword token next to parameters for `static-file` in parantheses.
+```
 source_static_file
   : KW_STATIC_FILE '(' source_static_file_params ')' { $$ = $3; }
   ;
 ```
 
-`instance` is used to return the newly-created driver back to the caller. `configuration` is the `GlobalCfg` that represents the user's config file.
+This rule says that the parameters for `static-file` will always begin with a string. This string is the pathname of the static file. With this string, we can call our function to create a new `static-file` source driver. `instance` is used to return the new driver back to the caller. `configuration` is the `GlobalCfg` that represents the user's config file.
+
+The midrule in this rule says that after the string for the pathname are options for the `static-file` driver.
 ```
 source_static_file_params
   : string
@@ -122,14 +132,17 @@ source_static_file_params
       free($1);
     }
   ;
+```
 
+This rule says that there can be any number of options (zero or more).
+```
 source_static_file_options
   : source_static_file_option source_static_file_options
   |
   ;
 ```
 
-`threaded_source_driver_option` is a standard option to include for threaded source drivers.
+This rule contains all the possible `static-file` options. There aren't any options specific to `static-file`, so we only include `threaded_source_driver_option`, which is a standard option to include for all threaded source drivers (which `static-file` is). Implementing plugin-specific options and flags is covered in the parser section of this guide.
 ```
 source_static_file_option
   : threaded_source_driver_option
@@ -145,7 +158,7 @@ The following line is also a macro. It copies in the Bison rules found in `lib/c
 
 ### `static-file-reader.h`
 
-This is the header file for our file reader.
+This is the header file for our file reader. Its implementation can be ignored. It is just a simple file reader and does not interface with syslog-ng.
 ```
 #ifndef STATIC_FILE_READER_H
 #define STATIC_FILE_READER_H
@@ -168,61 +181,14 @@ void sfr_free(StaticFileReader *self);
 #endif
 ```
 
-### `static-file-reader.c`
-
-The implementation for the file reader can be ignored. It is just a simple file reader and does not interface with syslog-ng.
-```
-#include "static-file-reader.h"
-
-StaticFileReader *
-sfr_new(void)
-{
-  return g_new0(StaticFileReader, 1);
-}
-
-gboolean
-sfr_open(StaticFileReader *self, gchar *pathname)
-{
-  self->file = fopen(pathname, "r");
-  return self->file != NULL;
-}
-
-GString *
-sfr_nextline(StaticFileReader *self, gsize maxlen)
-{
-  gchar *temp_buf = g_malloc(maxlen);
-  if (!fgets(temp_buf, maxlen, self->file))
-    {
-      g_free(temp_buf);
-      return NULL;
-    }
-
-  GString *line = g_string_new(temp_buf);
-  g_free(temp_buf);
-  return line;
-}
-
-void
-sfr_close(StaticFileReader *self)
-{
-  fclose(self->file);
-}
-
-void
-sfr_free(StaticFileReader *self)
-{
-  g_free(self);
-}
-```
-
 ### `static-file.h`
 
-There are various ways of implementing a source driver. The one we will use is based on `LogThreadedFetcherDriver`. That is to say, we will implement a class that extends `LogThreadedFetcherDriver`. The abstract methods that we inherit from this class are:
-* `connect`, which establishes a connection between the source driver and the actual source of the log messages. In this case the source is a static text file, and so establishing this connection means opening the file.
+There are different types of source driver classes that we can extend from, and therefore various ways of implementing a source driver. The one we will use is `LogThreadedFetcherDriver`. Its methods are:
+* `connect`, which establishes a connection between the source driver and the actual source of the log messages. In this case the source is a static text file, and so establishing a connection means opening the file.
 * `disconnect`, which severs the connection between the source driver and source. In this case it means closing the file.
-* `fetch`, which is a method that is automatically called to get and return new log mssages from the source.
+* `fetch`, which is a method that is automatically called to get and return a new log message from the source.
 
-The class that `LogThreadedFetcherDriver` is a based on, `LogThreadedSoruceDriver`, allows for more control by giving access to an abstract method `run`, which allows for control over how and when the `LogMessage` are sent. This is in turn based on `LogSrcDriver`, which has a more complicated implementation process, since it takes away the abstractions that the threaded source drivers offer.
+The class that `LogThreadedFetcherDriver` is a based on, `LogThreadedSoruceDriver`, allows for more control by giving access to an abstract method `run`, which allows for control over how and when the `LogMessage` are sent. And this class is in turn based on `LogSrcDriver`, which has a more complicated implementation process, since it takes away the abstractions that the threaded source drivers offer.
 
 See [here](https://github.com/balabit/syslog-ng/pull/2247) for more information on threaded source drivers.
 ```
@@ -250,25 +216,36 @@ LogDriver *static_file_sd_new(gchar *pathname, GlobalConfig *cfg);
 
 ### `static-file-source.c`
 
-For this file, we will examine the functions in the order that they are called, rather than the order that they appear in the source file.
-
-This function is called from the grammar file. It creates and returns a new `static-file` source driver.
+This function is called from the grammar file. It creates and returns a new `static-file` source driver. It can be thought of as the constructor for `StaticFileSourceDriver`.
 ```
 LogDriver *
 static_file_sd_new(gchar *pathname, GlobalConfig *cfg)
 {
   /* Allocate memory, zeroed so that we can check for uninitialized fields later on */
   StaticFileSourceDriver *self = g_new0(StaticFileSourceDriver, 1);
+```
 
-  /* Initialization function that fetcher drivers call */
+In general, `new` functions will call the `init` function for the superclass of the object being created. What the `init` function does is:
+1. Call the `init` function for the class one step up (so `init` functions are recursive).
+2. Perform any necessary initial operations for the `init` function's class.
+3. Set any default methods for the `init` function's class.
+
+In this case, we are calling the init function for `LogThreadedFetcherDriver` because it is the superclass of `StaticFileSourceDriver`. What it first does is call the `init` function one class up, which is `log_threaded_source_driver_init_instance`. And of course that function will do the same thing and call the `init` function another step up. This behaviour is like constructor chaining.
+
+The inital operations this `init` function performs are function calls related to the worker thread.
+
+The methods this `init` function sets defaults for are `init`, `deinit`, and `free_fn`. This means we can override the functions that we need, like `free`, since we have data specific to `StaticFileSourceDriver` that we need to free. But, we can use the defaults for methods where we don't need to do anything special, like `deinit`, since while the reader needs to close its file (which is handled in `close`), the driver itself has nothing it needs to deinitialise that is specific to `static-file`. The default method will deinitialise anything that needs to be deinitialised.
+
+However, we notice that this `init` function does not set a default for `fetch`, which makes sense, because there could not be a sensible default for that function. So, `init`, `deinit`, and `free_fn` are like virtual methods, while `fetch` is like an abstract method.
+```
   log_threaded_fetcher_driver_init_instance(&self->super, cfg);
 
-  /* Override the abstract methods for LogThreadedFetcherDriver */
+  /* Set the methods for LogThreadedFetcherDriver */
   self->super.connect = _open_file;
   self->super.disconnect = _close_file;
   self->super.fetch = _fetch_line;
 
-  /* Override the abstract methods for LogPipe */
+  /* Set the methods for LogPipe */
   self->super.super.super.super.super.free_fn = _free;
   self->super.super.format_stats_instance = _format_stats_instance;
 
@@ -287,8 +264,8 @@ _open_file(LogThreadedFetcherDriver *s)
 }
 ```
 
-Here is our implementation of the `fetch` method. It's job is to get and return a new log message from the source each time it is called, or state that there are no more log messages remaining. The type of the return value is a `LogThreadedFetchResult`, which is just a `LogMessage` with a status code at the beginning. This can be one of three things:
-* `THREADED_FETCH_SUCCESS`, to indicate a successful message.
+Here is our implementation of the `fetch` method. It's job is to get and return a new log message from the source each time it is called. The type of the return value is a `LogThreadedFetchResult`, which is just a `LogMessage` with a status code at the beginning. This can be one of three things:
+* `THREADED_FETCH_SUCCESS`, to indicate a successful message fetch.
 * `THREADED_FETCH_NOT_CONNECTED`, to indicate the connection to the source is no longer working.
 * `THREADED_FETCH_ERROR`, to indicate an error has occured.
 ```
@@ -299,13 +276,19 @@ _fetch_line(LogThreadedFetcherDriver *s)
 
   GString *line = sfr_nextline(self->reader, SF_MAXLEN);
 
+  /* EOF */
   if (!line)
     {
       LogThreadedFetchResult result = { THREADED_FETCH_NOT_CONNECTED, NULL };
       return result;
     }
+    
+  /* Get rid of the \n at the end, since we assume the template will place another one */
   g_string_truncate(line, line->len-1);
+```
 
+We create an empty `LogMessage`, set its `${MESSAGE}` part to the string we got from the reader, and return it as a successful `LogThreadedFetchResult`.
+```
   LogMessage *msg = log_msg_new_empty();
   log_msg_set_value(msg, LM_V_MESSAGE, line->str, -1);
   LogThreadedFetchResult result = { THREADED_FETCH_SUCCESS, msg };
@@ -318,7 +301,10 @@ _close_file(LogThreadedFetcherDriver *s)
   StaticFileSourceDriver *self = (StaticFileSourceDriver *) s;
   sfr_close(self->reader);
 }
+```
 
+This function will override the default `free` method. But notice that we are calling the default method at the end anyway. This is because we don't want to replace the default functionality (since it does useful things like freeing up the memory for the superclasses), we just want to add to it.
+```
 static void
 _free(LogPipe *s)
 {
