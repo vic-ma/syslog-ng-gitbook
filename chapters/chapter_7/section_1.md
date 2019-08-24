@@ -268,4 +268,4 @@ Animal dog_as_animal = (Animal) my_dog;
 gint dog_weight = dog_as_animal.weight;
 ```
 
-These are the basics of how syslog-ng uses OOP, but there is much more to know. For example, how abstraction (abstract and virtual methods) and constructors (`new` and `init` functions), work. These things are best understood by reading and working with actual syslog-ng code. They will be covered in the next section (source drivers) and so it is recommended that you read it even if you do not plan on making a source driver.
+These are the basics of how syslog-ng uses OOP, but there is more to know, like how abstraction (abstract and virtual methods) and constructors (`new` and `init` functions) work. These topics are best understood in the context of plugin programming. So, we will cover them in the source driver section.
