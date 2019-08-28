@@ -186,7 +186,7 @@ void sfr_free(StaticFileReader *self);
 There are different types of source driver classes that we can extend from, and therefore various ways of implementing a source driver. The one we will use is `LogThreadedFetcherDriver`. Its methods are:
 * `connect`, which establishes a connection between the source driver and the actual source of the log messages. In this case the source is a static text file, and so establishing a connection means opening the file.
 * `disconnect`, which severs the connection between the source driver and source. In this case it means closing the file.
-* `fetch`, which is a method that is automatically called to get and return a new log message from the source.
+* `fetch`, which is a method that is automatically called to get and return a new log message from the source. In this case it means to read a line from the file.
 
 The class that `LogThreadedFetcherDriver` is a based on, `LogThreadedSoruceDriver`, allows for more control by giving access to an abstract method `run`, which allows for control over how and when the `LogMessage` are sent. And this class is in turn based on `LogSrcDriver`, which has a more complicated implementation process, since it takes away the abstractions that the threaded source drivers offer.
 
