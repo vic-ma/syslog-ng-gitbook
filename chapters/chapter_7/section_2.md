@@ -303,7 +303,7 @@ _close_file(LogThreadedFetcherDriver *s)
 }
 ```
 
-This function will override the default `free` method. But notice that we are calling the default method at the end anyway. This is because we don't want to replace the default functionality (since it does useful things like freeing up the memory for the superclasses), we just want to add to it.
+This function will override the default `free` method. But notice that we are calling the default method at the end anyway. This is because we don't want to replace the default functionality (since it does useful things like freeing up the memory for the superclasses), we just want to add to it. This is a common thing to do when overriding virtual methods.
 ```
 static void
 _free(LogPipe *s)
