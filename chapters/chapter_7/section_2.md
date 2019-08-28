@@ -245,7 +245,7 @@ However, we notice that this `init` function does not set a default for `fetch`,
   self->super.disconnect = _close_file;
   self->super.fetch = _fetch_line;
 
-  /* Set the methods for LogPipe */
+  /* Set the methods for other superclasses */
   self->super.super.super.super.super.free_fn = _free;
   self->super.super.format_stats_instance = _format_stats_instance;
 
