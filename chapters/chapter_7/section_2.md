@@ -315,4 +315,18 @@ _free(LogPipe *s)
 
   log_threaded_fetcher_driver_free_method(s);
 }
+
+static const gchar *
+_format_stats_instance(LogThreadedSourceDriver *s)
+{
+  StaticFileSourceDriver *self = (StaticFileSourceDriver *) s;
+  static gchar persist_name[1024];
+
+  if (s->super.super.super.persist_name)
+    g_snprintf(persist_name, sizeof(persist_name), "static-file,%s", s->super.super.super.persist_name);
+  else
+    g_snprintf(persist_name, sizeof(persist_name), "static-file,%s", self->pathname);
+
+  return persist_name;
+}
 ```
