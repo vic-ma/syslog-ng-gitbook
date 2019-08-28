@@ -226,7 +226,7 @@ static_file_sd_new(gchar *pathname, GlobalConfig *cfg)
 ```
 
 In general, `new` functions will call the `init` function for the superclass of the object being created. What the `init` function does is:
-1. Call the `init` function for the class one step up (so `init` functions are recursive).
+1. Call the `init` function for the class one step up (so `init` functions are kind of recursive).
 2. Perform any necessary initial operations for the `init` function's class.
 3. Set any default methods for the `init` function's class.
 
