@@ -44,7 +44,7 @@ Syslog-ng needs a list of the module's plugins, in the form of `Plugin` objects,
 When the syslog-ng parser encounters `name` inside a context/block of the type, `type`, it will use `parser` to parse the block.
 ```
 source s_local {
-		file("/var/log/syslog");
+    file("/var/log/syslog");
 };
 ```
 The syslog-ng parser sees that it is inside a source context/block (`LL_CONTEXT_SOURCE`), and finds the string `file`, so it uses the parser for that plugin, which is `affile_parser`, to parse the configuration block.
@@ -209,52 +209,42 @@ CFG_PARSER_IMPLEMENT_LEXER_BINDING(affile_, LogDriver **)
 
 ## OOP in C
 
-Syslog-ng is written in C but simulates some object-oriented programming features. It is important to know how this is done before going into plugin programming.
+Syslog-ng is written in C but simulates some object-oriented programming features. It is important to know a bit about how this is done, before going into plugin programming.
 
 Structs are used to represent classes. The first field of any struct that represents a subclass is `super`. The type of `super` is the struct that represents the superclass. This type is not a pointer.
 
-The result of making `super` the first field and not a pointer is that an object will always be stored in a contiguous block of memory, with data for its superclasses being ordered from most abstract to least, from the start of the memory block. If `C` inherits from `B` inherits from `A`, the memory layout of a `C` object would look like:
+The result of making `super` the first field and not a pointer is that an object will have all the data for it and its superclasses stored in one contiguous block of memory, ordered from most abstract to the least. If `C` inherits from `B` inherits from `A`, the memory layout of a `C` object would look like:
 ```
 [[[Members for A] Members for B] Members for C]
 ```
 
-As a result of this, we can access the members of an object's superclasses with the dot operator, which allows for inheritence. We can also convert between classes with casts, which allows for polymorphism. Let's take a look at both these things with an example.
+This fact allows us to access the members of an object's superclasses with the dot operator, which allows for inheritence. We can also convert between classes with casts, which allows for polymorphism. Let's take a look at both these things with an example.
 
 ```
 /* Root class */
 typedef Animal_
 {
-	gint weight;
-	gint volume;
-	gint age;
+  gint weight;
+  gint volume;
+  gint age;
 } Animal;
 
 /* Subclass of Animal */
 typedef Canine_
 {
-	Animal super;
-	void (*wag_tail)(gint duration);
-	void (*bark)(gint loudness);
+  Animal super;
+  void (*wag_tail)(gint duration);
+  void (*bark)(gint loudness);
 } Canine;
 
 /* Subclass of Canine and Animal */
 typedef Dog_
 {
-	Canine super;
-	Human *owner;
+  Canine super;
+  Human *owner;
 } Dog;
 ```
-Converting between superclasses and subclasses:
-```
-/* Assume this works */
-Dog my_dog = new_dog();
 
-/* Casting Dog into Animal */
-Animal dog_as_animal = (Animal) my_dog;
-
-/* Treating Dog as Animal */
-gint dog_weight = dog_as_animal.weight;
-```
 Accessing inherited members:
 ```
 /* Assume both age and bark are initialised */
@@ -266,4 +256,16 @@ gint dog_age = my_dog.super.super.age;
 my_dog.super.bark();
 ```
 
-The details of abstraction, like implementing and overriding abstract methods, and related things like default method implementations and constructor-like functionality is better understood in the context of plugins.
+Converting between superclasses and subclasses:
+```
+/* Assume this works */
+Dog my_dog = new_dog();
+
+/* Casting Dog into Animal */
+Animal dog_as_animal = (Animal) my_dog;
+
+/* Treating Dog as Animal */
+gint dog_weight = dog_as_animal.weight;
+```
+
+These are the basics of how syslog-ng uses OOP, but there is more to know, like how abstraction (abstract and virtual methods) and constructors (`new` and `init` functions) work. These topics are best understood in the context of plugin programming. So, we will cover them in the source driver section.

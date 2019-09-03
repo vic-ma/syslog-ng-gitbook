@@ -5,7 +5,7 @@ This chapter is a guide for creating syslog-ng plugins.
 ## Prerequisites
 
 ### C and OOP
-You should be able to program in C and in object-oriented programming languages.
+You should be able to program in C and be familiar with object-oriented programming.
 
 ### syslog-ng
 You should understand how syslog-ng—and especially its plugins—work, from a user perspective.

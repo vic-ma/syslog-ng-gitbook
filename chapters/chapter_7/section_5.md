@@ -2,9 +2,7 @@
 
 This section will guide you through the process of creating a template function, by going through the files of `radix-funcs`, a set of template functions that convert numbers between radixes (bases).
 
-Template functions are represented by a `LogTemplateFunction`.
-
-But to implement a template function, we do not work directly with a `LogTemplateFunction`. Instead, we write the necessary functions and then call one of two macro functions: `TEMPLATE_FUNCTION` or `TEMPLATE_FUNCTION_SIMPLE`. The latter is a wrapper for the former, and it is suitable for template functions that just take strings as input. `TEMPLATE_FUNCTION` is useful for template functions that need to process their inputs first.
+Template functions extend `LogTemplateFunction`. But to implement a template function, we do not work directly with a subclass of it. Instead, we write the necessary functions and then call one of two macro functions: `TEMPLATE_FUNCTION` or `TEMPLATE_FUNCTION_SIMPLE`. The latter is a wrapper for the former, and it is suitable for template functions that just take strings as input. `TEMPLATE_FUNCTION` is useful for template functions that need to process their inputs first.
 
 `radix-funcs` uses `TEMPLATE_FUNCTION_SIMPLE`, and the implementation using that macro is what this guide will cover.
 
@@ -33,7 +31,7 @@ log {
 #include "template/simple-function.h"
 ```
 
-The inner workings of `TEMPLATE_FUNCTION_SIMPLE` are a bit much to go into but essentially they create a "construct" function, which is used to create a `Plugin` for the template function.  So, we need to call these macro functions, which declare the construct functions, in order to have them available to make into `Plugin` objects in the `*-plugin.c` file.
+The inner workings of `TEMPLATE_FUNCTION_SIMPLE` are a bit much to go into but essentially they create a "construct" function, which creates and returns a `LogTemplateFunction` based on the arguments passed in. So, we need to call these macro functions, which declare the construct functions, in order to have them available to make into `Plugin` objects in the `*-plugin.c` file.
 ```
 TEMPLATE_FUNCTION_PROTOTYPE(tf_radix_dec);
 TEMPLATE_FUNCTION_PROTOTYPE(tf_radix_hex);
@@ -94,7 +92,7 @@ For this guide we will only look at implementing the template function for decim
 
 `TEMPLATE_FUNCTION_SIMPLE` takes in one argument, which is a function with a specific prototype. So we just need to implement this function and pass it into the macro function.
 
-We need to write a function with the following parameters:
+The parameters of the function are as follows:
 
 1. The current log message being parsed, which may or may not be used depending on the template function.
 2. The number of arguments passed in (not including the keyword for the template function itself).
@@ -128,7 +126,7 @@ TEMPLATE_FUNCTION_SIMPLE(tf_radix_dec);
 
 This is the `*-plugin.c` file for the examples module.
 
-Using the template function macros, we don't need to modify any grammar files, but we do need to add our template functions as a `Plugin` into the plugins list. To do this we call `TEMPLATE_FUNCTION_PLUGIN`, which will make a `Plugin` based on the construct function from our `TEMPLATE_FUNCTION_SIMPLE` call, which is in turn based on our template function.
+We don't need to modify any grammar files, but we do need to add our template functions as a `Plugin` into the plugins list. To do this we call `TEMPLATE_FUNCTION_PLUGIN`, which will make a `Plugin` based on the construct function from our `TEMPLATE_FUNCTION_SIMPLE` call.
 ```
 static Plugin example_plugins[] =
 {
@@ -144,7 +142,7 @@ static Plugin example_plugins[] =
 
 ### `test_radix_funcs.c`
 
-Because our template function is independent of any log message, we can just call `assert_template_format` for our tests. However, there is a variant called `assert_template_format_msg` that takes in a `LogMessage` as well, for template functions that need it. These and other template function testing functions can be found in `libtest/cr_template.c`.
+Because our template function is independent of any log message, we can just use `assert_template_format` for our tests. However, there is a variant called `assert_template_format_msg` that takes in a `LogMessage` as well, for template functions that need it. These and other template function testing functions can be found in `libtest/cr_template.c`.
 ```
 /* ... */
 

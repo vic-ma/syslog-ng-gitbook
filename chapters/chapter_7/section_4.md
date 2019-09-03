@@ -1,8 +1,8 @@
 # Filter Function
 
-This section will guide you through the process of creating a filter function, by going through the files of filter-length, a set of filter functions which filter log messages based on the length of their `${MESSAGE}`. `${MESSAGE}` refers to the syslog-ng macro and not the MSG part defined by the syslog protocols.
+This section will guide you through the process of creating a filter function, by going through the files of filter-length, a set of filter functions which filter log messages based on the length of their `${MESSAGE}`. `${MESSAGE}` refers to the syslog-ng macro and not MSG as defined by the syslog protocols.
 
-Filter functions are written under `lib/filter/`, and so they do not belong to a module and are not technically plugins. To add a filter function we only need to modify the parser and grammar files; there is no plugin file.
+Filter functions are written under `lib/filter/`, and so they do not belong to any module and are not technically plugins. To add a filter function we only need to modify the parser and grammar files; there is no plugin file.
 
 ### Example Config
 ```
@@ -30,7 +30,7 @@ log {
 
 ### `filter-expr-parser.c`
 
-This is the parser file for filter functions. We add `CfgLexerKeyword` for each of our filter functions to the list of keywords.
+This is the parser file for filter functions. We add a `CfgLexerKeyword` for each of our filter functions to the list of keywords.
 
 ```
 #include "filter/filter-expr-parser.h"
@@ -128,16 +128,16 @@ filter_simple_expr
 	| KW_FACILITY '(' LL_NUMBER ')'             { $$ = filter_facility_new(0x80000000 | $3); }
 	| KW_LEVEL    '(' filter_level_list ')'     { $$ = filter_level_new($3); }
 	| KW_FILTER   '(' string ')'                { $$ = filter_call_new($3, configuration); free($3); }
-    | KW_LEN_LT   '(' LL_NUMBER ')'             { $$ = filter_len_lt_new($3); }
-    | KW_LEN_LE   '(' LL_NUMBER ')'             { $$ = filter_len_le_new($3); }
-    | KW_LEN_GT   '(' LL_NUMBER ')'             { $$ = filter_len_gt_new($3); }
-    | KW_LEN_GE   '(' LL_NUMBER ')'             { $$ = filter_len_ge_new($3); }
-    | KW_LEN_EQ   '(' LL_NUMBER ')'             { $$ = filter_len_eq_new($3); }
-    | KW_LEN_NE   '(' LL_NUMBER ')'             { $$ = filter_len_ne_new($3); }
-    | KW_LEN_GTLT '(' LL_NUMBER LL_NUMBER ')'   { $$ = filter_len_gtlt_new($3, $4); }
-    | KW_LEN_GTLE '(' LL_NUMBER LL_NUMBER ')'   { $$ = filter_len_gtle_new($3, $4); }
-    | KW_LEN_GELT '(' LL_NUMBER LL_NUMBER ')'   { $$ = filter_len_gelt_new($3, $4); }
-    | KW_LEN_GELE '(' LL_NUMBER LL_NUMBER ')'   { $$ = filter_len_gele_new($3, $4); }
+	| KW_LEN_LT   '(' LL_NUMBER ')'             { $$ = filter_len_lt_new($3); }
+	| KW_LEN_LE   '(' LL_NUMBER ')'             { $$ = filter_len_le_new($3); }
+	| KW_LEN_GT   '(' LL_NUMBER ')'             { $$ = filter_len_gt_new($3); }
+	| KW_LEN_GE   '(' LL_NUMBER ')'             { $$ = filter_len_ge_new($3); }
+	| KW_LEN_EQ   '(' LL_NUMBER ')'             { $$ = filter_len_eq_new($3); }
+	| KW_LEN_NE   '(' LL_NUMBER ')'             { $$ = filter_len_ne_new($3); }
+	| KW_LEN_GTLT '(' LL_NUMBER LL_NUMBER ')'   { $$ = filter_len_gtlt_new($3, $4); }
+	| KW_LEN_GTLE '(' LL_NUMBER LL_NUMBER ')'   { $$ = filter_len_gtle_new($3, $4); }
+	| KW_LEN_GELT '(' LL_NUMBER LL_NUMBER ')'   { $$ = filter_len_gelt_new($3, $4); }
+	| KW_LEN_GELE '(' LL_NUMBER LL_NUMBER ')'   { $$ = filter_len_gele_new($3, $4); }
 
 /* ... */
 ```
@@ -168,11 +168,11 @@ FilterExprNode *filter_len_gele_new(int min, int max);
 
 ### `filter-length.c`
 
-Filter function classes inherit from `FilterExprNode`. `FilterExprNode` has virtual methods `init`, `free_fn`, and `eval`. The main functionality of filter functions is contained in `eval`; it is what determines if a log message passes the filter or not.
+Filter function classes extend `FilterExprNode`. `FilterExprNode` has abstract methods `init`, `free_fn`, and `eval`. `eval` contains the main functionality of filter functions; it is what determines if a log message passes the filter or not.
 
-The reason why filter functions are "expression nodes" is because a filter expression is made up of one or more filter functions, connected by logical operators. So, when a filter expression is parsed, it gets represented as a `FilterExprNode` binary tree, to make calculating the result simple (this is all handled by the existing code and we don't need to do anything special when implementing our filter functions).
+The reason why filter functions are "expression nodes" is because a filter expression in the config file is made up of one or more filter statements, connected by logical operators. So, when a filter expression is parsed, it gets represented as a `FilterExprNode` binary tree, to make calculating the result simple (this is all handled by the existing code in `lib/filter/` and we don't need to do anything special in our implementation).
 
-We need to create two classes for `filter-length`: one for single length comparisons and one for range-based comparisons.
+We need to create two filter function classes for `filter-length`: one for single length comparisons and one for range-based comparisons.
 ```
 #include "filter-length.h"
 
@@ -190,9 +190,9 @@ typedef struct _FilterLengthRange
 } FilterLengthRange;
 ```
 
-We use a macro function to generate the code needed for our filter functions since for each type (single and range) the thing that changes is the comparison operator used.
+We use a macro function to generate the code needed for our filter functions, since for each type (single and range) the only thing that changes is the comparison operator(s) used.
 
-First we have the `new` function for our single comparison filter functions. Our filter function does not have anything that needs to be initialised, nor any fields that use dynamic memory, so we only implement and set the `eval` function, not `init` or `free_fn`.
+First we have the `new` function for our single comparison filter functions. Our filter function does not have anything that needs to be initialised, nor any fields that use dynamic memory, so we only implement and set the `eval` method, not `init` or `free_fn`.
 ```
 #define IMPLEMENT_FILTER_LEN_SINGLE(comp_name, comp_op)
     FilterExprNode *                                                                      \
@@ -206,8 +206,8 @@ First we have the `new` function for our single comparison filter functions. Our
     }
 ```
 
-Here is the `eval` function for our single comparison filter functions. The first parameter is a `FilterExprNode` representing the filter function. The second parameter is a `LogMessage` pointer array and the third parameter is the index of the `LogMessage` to evaluate.
-```                        \
+Here is the `eval` method for our single comparison filter functions. The first parameter is a `FilterExprNode` representing the filter function. The second parameter is a `LogMessage` pointer array and the third parameter is the index of the `LogMessage` to evaluate.
+```
     static gboolean                                                                       \
     filter_len_ ## comp_name ## _eval(FilterExprNode *s, LogMessage **msgs, gint num_msg) \
     {                                                                                     \
@@ -220,7 +220,7 @@ First we need to get the message we want from the array. `num_msg` starts counti
       LogMessage *msg = msgs[num_msg - 1];                                                \
 ```
 
-Now that we have our `LogMessage`, we will extract the `${MESSAGE}` part from it to evaluate its length. To do so, we call the `log_msg_get_value` function with the appropriate constant. This is the lower level version of the `log_msg_get_value_by_name` function.
+Now that we have our `LogMessage`, we will extract the `${MESSAGE}` part from it to evaluate its length. To do so, we call the `log_msg_get_value` function with the appropriate constant.
 ```
       const gchar *message_part = log_msg_get_value(msg, LM_V_MESSAGE, NULL);             \
 ```
@@ -229,13 +229,13 @@ Finally we can calculate our result.
       result = (gint) strlen(message_part) comp_op self->length;                          \
 ```
 
-`FilterExprNode` has a bit field `comp` (complement), which when on, tells the filter function to negate its results (i.e. the return value of `eval`). It is switched on when a logical NOT operator is applied to the filter function. So, before we return our result, we need to bitwise XOR it with `comp`.
+`FilterExprNode` has a bit field `comp` (complement), which when on, tells the filter function to negate its results (i.e. negate the return value of `eval`). It is switched on when a logical NOT operator is applied to the filter function. So, before we return our result, we need to bitwise XOR it with `comp`.
 ```
       return result ^ s->comp;                                                            \
     }                                                                                     \
 ```
 
-This is the macro function for generating the code for our range-based filter functions. There are just a few differences so we will skip over this part.
+This is the macro function for generating the code for our range-based filter functions. There are just a few differences from the single comparison macro, so we will skip over this part.
 ```
 #define IMPLEMENT_FILTER_LEN_RANGE(comp_name, comp_op_1, comp_op_2)                       \
     static gboolean                                                                       \
@@ -298,7 +298,7 @@ IMPLEMENT_FILTER_LEN_RANGE(gele, >=, <=)
 TestSuite(filter, .init = setup, .fini = teardown);
 ```
 
-Because our filter functions always have the same input and output structure, we will use parameterized tests (from Criterion). There is one for each of our filter functions, but for this guide we will just look at the test for a single comparison filter function.
+Because our filter functions always have the same input and output structure, we will use Criterion's parameterized tests. There is one for each of our filter functions, but for this guide we will just look at the test for a single comparison filter function.
 ```
 #include "filter/filter-expr.h"
 #include "filter/filter-length.h"
