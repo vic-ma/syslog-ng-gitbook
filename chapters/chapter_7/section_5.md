@@ -8,6 +8,22 @@ But to implement a template function, we do not work directly with a `LogTemplat
 
 `radix-funcs` uses `TEMPLATE_FUNCTION_SIMPLE`, and the implementation using that macro is what this guide will cover.
 
+### Example Config
+```
+source s_local {
+    file("/tmp/input.log");
+};
+
+destination d_local {
+    file("/tmp/output.log" template("$(hex ${PID}): ${MESSAGE}\n"));
+};
+
+log {
+    source(s_local);
+    destination(d_local);
+};
+```
+
 ### `radix-funcs.h`
 
 ```

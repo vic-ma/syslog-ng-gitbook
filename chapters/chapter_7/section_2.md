@@ -2,6 +2,18 @@
 
 This section will guide you through the process of creating a source driver plugin, by going through the files of `static-file`, a source driver that reads existing log messages from a text file.
 
+### Example Config
+```
+log {
+  source {
+    example-static-file("/tmp/input.log");
+  };
+  destination {
+    file("/tmp/output.log");
+  };
+};
+```
+
 ### `static-file-parser.h`
 
 ```

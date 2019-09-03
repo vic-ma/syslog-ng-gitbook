@@ -4,6 +4,30 @@ This section will guide you through the process of creating a filter function, b
 
 Filter functions are written under `lib/filter/`, and so they do not belong to a module and are not technically plugins. To add a filter function we only need to modify the parser and grammar files; there is no plugin file.
 
+### Example Config
+```
+source s_local {
+    file("/tmp/input.log");
+};
+
+filter f_one_to_onehundred {
+    len_gtle(0 100);
+
+    # The old way of doing this:
+    # "$(length ${MSG})" > "0" and "$(length ${MSG})" <= "100"
+};
+
+destination d_local {
+    file("/tmp/output.log");
+};
+
+log {
+    source(s_local);
+    filter(f_one_to_onehundred);
+    destination(d_local);
+};
+```
+
 ### `filter-expr-parser.c`
 
 This is the parser file for filter functions. We add `CfgLexerKeyword` for each of our filter functions to the list of keywords.

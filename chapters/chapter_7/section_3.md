@@ -9,6 +9,32 @@ This parser supports one option, `suffix`, which lets the user choose what suffi
 
 This parser also supports two flags, `letters` and `numbers`, which lets the user choose what symbols their ordered lists use (`A) B) C)` vs. `1) 2) 3)`).
 
+### Example Config
+
+```
+source s_file {
+  file("/tmp/input.log");
+};
+
+parser ordered {
+  example_ordered_parser(flags(numbers));
+};
+
+template t_sqr {
+  template("$(* $1 $1), $(* $2 $2), $(* $3 $3)\n");
+};
+
+destination d_file {
+  file("/tmp/output.log" template(t_sqr));
+};
+
+log {
+  source(s_file);
+  parser(ordered);
+  destination(d_file);
+};
+```
+
 ### `ordered-parser-parser.h`
 
 ```
