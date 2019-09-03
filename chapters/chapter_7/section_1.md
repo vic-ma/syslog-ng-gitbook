@@ -250,10 +250,10 @@ Accessing inherited members:
 /* Assume both age and bark are initialised */
 
 /* Getting inherited field */
-gint dog_age = my_dog.super.super.age;
+gint dog_age = my_dog->super.super.age;
 
 /* Using inherited method */
-my_dog.super.bark();
+my_dog->super.bark();
 ```
 
 Converting between superclasses and subclasses:
