@@ -100,7 +100,7 @@ affile_module_init(PluginContext *context, CfgArgs *args)
 }
 ```
 
-Finally we fill out the `ModuleInfo` for this module (boilerplate).
+Finally we fill out the `ModuleInfo` for this module.
 ```
 const ModuleInfo module_info =
 {
@@ -188,7 +188,7 @@ static CfgLexerKeyword affile_keywords[] =
 };
 ```
 
-Now we can define our `CfgParser` (boilerplate).
+Now we can define our `CfgParser`.
 ```
 CfgParser affile_parser =
 {
