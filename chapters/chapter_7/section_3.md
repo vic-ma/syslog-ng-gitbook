@@ -269,7 +269,6 @@ ordered_parser_suffix_valid(gchar suffix)
 void
 ordered_parser_set_suffix(LogParser *s, gchar suffix)
 {
-  printf("SUFFIX\n");
   OrderedParser *self = (OrderedParser *) s;
   self->suffix = suffix;
 }
