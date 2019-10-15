@@ -153,7 +153,7 @@ source_static_file_options
   ;
 ```
 
-This rule contains all the possible `static-file` options. There aren't any options specific to `static-file`, so we only include `threaded_source_driver_option`, which is a standard option to include for all threaded source drivers (which `static-file` is). Implementing plugin-specific options and flags is covered in the parser section of this guide.
+This rule contains all the possible `static-file` options. There aren't any options specific to `static-file`, so we only include `threaded_source_driver_option` and `threaded_fetcher_driver_option`, which are standard options to include for all threaded source drivers and threaded fetcher drivers, respectively (both of which `static-file` is). Implementing plugin-specific options and flags is covered in the parser section of this guide.
 ```
 source_static_file_option
   : threaded_source_driver_option
