@@ -208,7 +208,9 @@ Lastly we need to call this macro function to define our lex and error functions
 CFG_PARSER_IMPLEMENT_LEXER_BINDING(affile_, LogDriver **)
 ```
 
-## Classes in C
+## Structs as Classes
+
+/* TODO */
 
 Syslog-ng is written in C but simulates some object-oriented programming features. It is important to know a bit about how this is done, before going into plugin programming.
 
@@ -221,53 +223,3 @@ The result of making `super` the first field and not a pointer is that an object
 
 This fact allows us to access the members of an object's superclasses with the dot operator, which allows for inheritence. We can also convert between classes with casts, which allows for polymorphism. Let's take a look at both these things with an example.
 
-```
-/* Root class */
-typedef struct Animal_
-{
-  gint weight;
-  gint volume;
-  gint age;
-} Animal;
-
-/* Subclass of Animal */
-typedef struct Canine_
-{
-  Animal super;
-  void (*wag_tail)(Canine *self, gint duration);
-  void (*bark)(Canine *self, gint loudness);
-} Canine;
-
-/* Subclass of Canine and Animal */
-typedef struct Dog_
-{
-  Canine super;
-  Human *owner;
-} Dog;
-```
-
-Accessing inherited members:
-```
-/* Assume both age and bark are initialised, and my_dog points to an initialised
-   Dog object */
-
-/* Getting inherited field */
-gint dog_age = my_dog->super.super.age;
-
-/* Using inherited method */
-my_dog->super.bark(my_dog, 3);
-```
-
-Converting between superclasses and subclasses:
-```
-/* Assume this works */
-Dog my_dog = new_dog();
-
-/* Casting Dog into Animal */
-Animal *dog_as_animal = (Animal *) my_dog;
-
-/* Treating Dog as Animal */
-gint dog_weight = dog_as_animal.weight;
-```
-
-These are the basics of how syslog-ng uses OOP, but there is more to know, like how abstraction (abstract and virtual methods) and constructors (`new` and `init` functions) work. These topics are best understood in the context of plugin programming. So, we will cover them in the source driver section.
