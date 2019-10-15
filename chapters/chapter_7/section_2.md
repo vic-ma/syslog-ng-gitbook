@@ -141,7 +141,6 @@ source_static_file_params
   source_static_file_options
     {
       $$ = last_driver;
-      free($1);
     }
   ;
 ```
@@ -158,6 +157,7 @@ This rule contains all the possible `static-file` options. There aren't any opti
 ```
 source_static_file_option
   : threaded_source_driver_option
+  | threaded_fetcher_driver_option
   ;
 ```
 
