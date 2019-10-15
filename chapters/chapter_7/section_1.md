@@ -1,3 +1,4 @@
+
 # Modules and Plugins
 
 Plugins are the individual pieces of functionality used in log paths. Examples include `file`, `csv-parser`, and `base64-encode`. Modules are groups of one or more plugins. The modules that the aforementioned plugins belong to are `affile`, `csvparser`, and `basicfuncs`, respectively.
@@ -233,8 +234,8 @@ typedef struct Animal_
 typedef struct Canine_
 {
   Animal super;
-  void (*wag_tail)(Canine *s, gint duration);
-  void (*bark)(Canine *s, gint loudness);
+  void (*wag_tail)(Canine *self, gint duration);
+  void (*bark)(Canine *self, gint loudness);
 } Canine;
 
 /* Subclass of Canine and Animal */
