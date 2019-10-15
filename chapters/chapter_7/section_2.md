@@ -1,3 +1,4 @@
+
 # Source Driver
 
 This section will guide you through the process of creating a source driver plugin, by going through the files of `static-file`, a source driver that reads existing log messages from a text file.
@@ -237,18 +238,18 @@ static_file_sd_new(gchar *pathname, GlobalConfig *cfg)
   StaticFileSourceDriver *self = g_new0(StaticFileSourceDriver, 1);
 ```
 
-In general, `new` functions will call the `init` function for the superclass of the object being created. What the `init` function does is:
-1. Call the `init` function for the class one step up (so `init` functions are kind of recursive).
-2. Perform any necessary initial operations for the `init` function's class.
-3. Set any default methods for the `init` function's class.
+In general, `new` functions will call the `init_instance` function for the superclass of the object being created. What the `init_instance` function does is:
+1. Call the `init_instance` function for the class one step up (so `init_instance` functions are kind of recursive).
+2. Perform any necessary initial operations for the `init_instance` function's class.
+3. Set any default methods for the `init_instance` function's class.
 
-In this case, we are calling the init function for `LogThreadedFetcherDriver` because it is the superclass of `StaticFileSourceDriver`. What it first does is call the `init` function one class up, which is `log_threaded_source_driver_init_instance`. And of course that function will do the same thing and call the `init` function another step up. This behaviour is like constructor chaining.
+In this case, we are calling the `init_instance` function for `LogThreadedFetcherDriver` because it is the superclass of `StaticFileSourceDriver`. What it first does is call the `init_instance` function one class up, which is `log_threaded_source_driver_init_instance`. And of course that function will do the same thing and call the `init_instance` function another step up. This behaviour is like constructor chaining.
 
-The inital operations this `init` function performs are function calls related to the worker thread.
+The inital operations this `init_instance` function performs are function calls related to the worker thread.
 
-The methods this `init` function sets defaults for are `init`, `deinit`, and `free_fn`. This means we can override the functions that we need, like `free`, since we have data specific to `StaticFileSourceDriver` that we need to free. But, we can use the defaults for methods where we don't need to do anything special, like `deinit`, since while the reader needs to close its file (which is handled in `close`), the driver itself has nothing it needs to deinitialise that is specific to `static-file`. The default method will deinitialise anything that needs to be deinitialised.
+The methods this `init_instance` function sets defaults for are `init`, `deinit`, and `free_fn`. This means we can override the functions that we need, like `free`, since we have data specific to `StaticFileSourceDriver` that we need to free. But, we can use the defaults for methods where we don't need to do anything special, like `deinit`, since while the reader needs to close its file (which is handled in `close`), the driver itself has nothing it needs to deinitialise that is specific to `static-file`. The default method will deinitialise anything that needs to be deinitialised.
 
-However, we notice that this `init` function does not set a default for `fetch`, which makes sense, because there could not be a sensible default for that function. So, `init`, `deinit`, and `free_fn` are like virtual methods, while `fetch` is like an abstract method.
+However, we notice that this `init_instance` function does not set a default for `fetch`, which makes sense, because there could not be a sensible default for that function. So, `init`, `deinit`, and `free_fn` are like virtual methods, while `fetch` is like an abstract method.
 ```
   log_threaded_fetcher_driver_init_instance(&self->super, cfg);
 
