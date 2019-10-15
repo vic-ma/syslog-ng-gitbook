@@ -207,7 +207,7 @@ Lastly we need to call this macro function to define our lex and error functions
 CFG_PARSER_IMPLEMENT_LEXER_BINDING(affile_, LogDriver **)
 ```
 
-## OOP in C
+## Classes in C
 
 Syslog-ng is written in C but simulates some object-oriented programming features. It is important to know a bit about how this is done, before going into plugin programming.
 
@@ -222,7 +222,7 @@ This fact allows us to access the members of an object's superclasses with the d
 
 ```
 /* Root class */
-typedef Animal_
+typedef struct Animal_
 {
   gint weight;
   gint volume;
@@ -230,15 +230,15 @@ typedef Animal_
 } Animal;
 
 /* Subclass of Animal */
-typedef Canine_
+typedef struct Canine_
 {
   Animal super;
-  void (*wag_tail)(gint duration);
-  void (*bark)(gint loudness);
+  void (*wag_tail)(Canine *s, gint duration);
+  void (*bark)(Canine *s, gint loudness);
 } Canine;
 
 /* Subclass of Canine and Animal */
-typedef Dog_
+typedef struct Dog_
 {
   Canine super;
   Human *owner;
@@ -253,7 +253,7 @@ Accessing inherited members:
 gint dog_age = my_dog->super.super.age;
 
 /* Using inherited method */
-my_dog->super.bark();
+my_dog->super.bark(my_dog, 3);
 ```
 
 Converting between superclasses and subclasses:
@@ -262,7 +262,7 @@ Converting between superclasses and subclasses:
 Dog my_dog = new_dog();
 
 /* Casting Dog into Animal */
-Animal dog_as_animal = (Animal) my_dog;
+Animal *dog_as_animal = (Animal *) my_dog;
 
 /* Treating Dog as Animal */
 gint dog_weight = dog_as_animal.weight;
