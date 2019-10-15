@@ -248,7 +248,8 @@ typedef struct Dog_
 
 Accessing inherited members:
 ```
-/* Assume both age and bark are initialised */
+/* Assume both age and bark are initialised, and my_dog points to an initialised
+   Dog object */
 
 /* Getting inherited field */
 gint dog_age = my_dog->super.super.age;
