@@ -264,7 +264,7 @@ However, we notice that this `init_instance` function does not set a default for
 
   /* Set the StaticFile specific fields */
   self->reader = sfr_new();
-  self->pathname = strdup(pathname);
+  self->pathname = g_strdup(pathname);
 
   return &self->super.super.super.super;
 }
@@ -303,7 +303,7 @@ _fetch_line(LogThreadedFetcherDriver *s)
 We create an empty `LogMessage`, set its `${MESSAGE}` part to the string we got from the reader, and return it as a successful `LogThreadedFetchResult`.
 ```
   LogMessage *msg = log_msg_new_empty();
-  log_msg_set_value(msg, LM_V_MESSAGE, line->str, -1);
+  log_msg_set_value(msg, LM_V_MESSAGE, line->str, line->len);
   LogThreadedFetchResult result = { THREADED_FETCH_SUCCESS, msg };
   return result;
 }
