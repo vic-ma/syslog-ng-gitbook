@@ -56,10 +56,7 @@ _check_argc(gint argc, const gchar *tf_name)
     }
   else if (argc > 1)
     {
-      GString *error_msg = g_string_new(tf_name);
-      g_string_append(error_msg, " parsing failed: too many arguments");
-      msg_error(error_msg->str);
-      g_string_free(error_msg, TRUE);
+      msg_error("parsing failed: too many arguments", evt_tag_str("tf_name", tf_name));
       return FALSE;
     }
   return TRUE;
@@ -71,20 +68,10 @@ _check_strtol_result(gchar *endptr, const gchar *tf_name)
 {
   if (*endptr != '\0' || errno == EINVAL || errno == ERANGE)
     {
-      GString *error_msg = g_string_new(tf_name);
-      g_string_append(error_msg, " conversion failed: invalid number");
-      msg_error(error_msg->str);
-      g_string_free(error_msg, TRUE);
+      msg_error("conversion failed: invalid number", evt_tag_str("tf_name", tf_name));
       return FALSE;
     }
   return TRUE;
-}
-
-/* Printf-based radix converter */
-static gchar *
-_convert(const char *format, long int num)
-{
-  return  g_strdup_printf(format, num);
 }
 ```
 
@@ -106,14 +93,12 @@ tf_radix_dec(LogMessage *msg, gint argc, GString *argv[], GString *result)
     const gchar *tf_name = "($dec)";
     if (!_check_argc(argc, tf_name))
       return;
-    long int original = strtol(argv[0]->str, NULL, 0);
-    gchar *converted = _convert("%d", original);
-```
-
-At this point we have our converted integer in the form of a string and we just need to return it by appending it to `result`.
-```
-    g_string_append(result, converted);
-    g_free(converted);
+    gchar *endptr = g_malloc(argv[0]->len);
+    errno = 0;
+    glong original = strtol(argv[0]->str, NULL, 0);
+    if (!_check_strtol_result(endptr, tf_name))
+      return;
+    g_string_append_printf(result, "%ld", original);
   }
 ```
 
