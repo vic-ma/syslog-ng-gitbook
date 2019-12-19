@@ -190,93 +190,75 @@ typedef struct _FilterLengthRange
 } FilterLengthRange;
 ```
 
-We use a macro function to generate the code needed for our filter functions, since for each type (single and range) the only thing that changes is the comparison operator(s) used.
+In the actual code, we use a macro function to generate the code needed for our filter functions, since for each type (single and range) the only thing that changes is the comparison operator(s) used. But for this guide we will just look at a single example of each type, implemented without the any macros.
 
 First we have the `new` function for our single comparison filter functions. Our filter function does not have anything that needs to be initialised, nor any fields that use dynamic memory, so we only implement and set the `eval` method, not `init` or `free_fn`.
 ```
-#define IMPLEMENT_FILTER_LEN_SINGLE(comp_name, comp_op)
-    FilterExprNode *                                                                      \
-    filter_len_ ## comp_name ## _new(gint length)                                         \
-    {                                                                                     \
-      FilterLengthSingle *self = g_new0(FilterLengthSingle, 1);                           \
-      filter_expr_node_init_instance(&self->super);                                       \
-      self->super.eval = filter_len_ ## comp_name ## _eval;                               \
-      self->length = length;                                                              \
-      return &self->super;                                                                \
-    }
+FilterExprNode *
+filter_len_lt_new(gint length)
+{
+  FilterLengthSingle *self = g_new0(FilterLengthSingle, 1);
+  filter_expr_node_init_instance(&self->super);
+  self->super.eval = filter_len_lt_eval;
+  self->length = length;
+  return &self->super;
+}
 ```
 
 Here is the `eval` method for our single comparison filter functions. The first parameter is a `FilterExprNode` representing the filter function. The second parameter is a `LogMessage` pointer array and the third parameter is the index of the `LogMessage` to evaluate.
 ```
-    static gboolean                                                                       \
-    filter_len_ ## comp_name ## _eval(FilterExprNode *s, LogMessage **msgs, gint num_msg) \
-    {                                                                                     \
-      FilterLengthSingle *self = (FilterLengthSingle *) s;                                \
-      gboolean result;                                                                    \
+static gboolean
+filter_len_lt_eval(FilterExprNode *s, LogMessage **msgs, gint num_msg)
+{
+  FilterLengthSingle *self = (FilterLengthSingle *) s;
+  gboolean result;
 ```
-
+    
 First we need to get the message we want from the array. `num_msg` starts counting from one, so `num_msg` less one gives us the index for the `LogMessage` to evaluate.
 ```
-      LogMessage *msg = msgs[num_msg - 1];                                                \
+  LogMessage *msg = msgs[num_msg - 1];
 ```
 
 Now that we have our `LogMessage`, we will extract the `${MESSAGE}` part from it to evaluate its length. To do so, we call the `log_msg_get_value` function with the appropriate constant.
 ```
-      const gchar *message_part = log_msg_get_value(msg, LM_V_MESSAGE, NULL);             \
+  const gchar *message_part = log_msg_get_value(msg, LM_V_MESSAGE, NULL);
 ```
 Finally we can calculate our result.
 ```
-      result = (gint) strlen(message_part) comp_op self->length;                          \
+  result = (gint) strlen(message_part) < self->length;
 ```
 
-`FilterExprNode` has a bit field `comp` (complement), which when on, tells the filter function to negate its results (i.e. negate the return value of `eval`). It is switched on when a logical NOT operator is applied to the filter function. So, before we return our result, we need to bitwise XOR it with `comp`.
+`FilterExprNode` has a bit field `comp` (complement), which when on, tells the filter function to negate its results (i.e. negate the return value of `eval`). It is switched on when a logical NOT operator is applied to the filter function in a filter expression. So, before we return our result, we need to bitwise XOR it with `comp`.
 ```
-      return result ^ s->comp;                                                            \
-    }                                                                                     \
-```
-
-This is the macro function for generating the code for our range-based filter functions. There are just a few differences from the single comparison macro, so we will skip over this part.
-```
-#define IMPLEMENT_FILTER_LEN_RANGE(comp_name, comp_op_1, comp_op_2)                       \
-    static gboolean                                                                       \
-    filter_len_ ## comp_name ## _eval(FilterExprNode *s, LogMessage **msgs, gint num_msg) \
-    {                                                                                     \
-      FilterLengthRange *self = (FilterLengthRange *) s;                                  \
-      gboolean result;                                                                    \
-                                                                                          \
-      LogMessage *msg = msgs[num_msg - 1];                                                \
-      const gchar *message_part = log_msg_get_value(msg, LM_V_MESSAGE, NULL);             \
-                                                                                          \
-      result = ((gint) strlen(message_part) comp_op_1 self->min) &&                       \
-               ((gint) strlen(message_part) comp_op_2 self->max);                         \
-      return result ^ s->comp;                                                            \
-    }                                                                                     \
-                                                                                          \
-    FilterExprNode *                                                                      \
-    filter_len_ ## comp_name ## _new(gint min, gint max)                                  \
-    {                                                                                     \
-      FilterLengthRange *self = g_new0(FilterLengthRange, 1);                             \
-      filter_expr_node_init_instance(&self->super);                                       \
-      self->super.eval = filter_len_ ## comp_name ## _eval;                               \
-      self->min = min;                                                                    \
-      self->max = max;                                                                    \
-      return &self->super;                                                                \
-    }
+  return result ^ s->comp;
+}
 ```
 
-Finally we call our macro functions to implement all our filter functions.
+This is an example range-based filter function. There are just a few differences from the single comparison filter function, so we will skip over this part.
 ```
-IMPLEMENT_FILTER_LEN_SINGLE(lt, <)
-IMPLEMENT_FILTER_LEN_SINGLE(le, <=)
-IMPLEMENT_FILTER_LEN_SINGLE(gt, >)
-IMPLEMENT_FILTER_LEN_SINGLE(ge, >=)
-IMPLEMENT_FILTER_LEN_SINGLE(eq, ==)
-IMPLEMENT_FILTER_LEN_SINGLE(ne, !=)
+static gboolean
+filter_len_gtlt_eval(FilterExprNode *s, LogMessage **msgs, gint num_msg)
+{
+  FilterLengthRange *self = (FilterLengthRange *) s;
+  gboolean result;
 
-IMPLEMENT_FILTER_LEN_RANGE(gtlt, >, <)
-IMPLEMENT_FILTER_LEN_RANGE(gtle, >, <=)
-IMPLEMENT_FILTER_LEN_RANGE(gelt, >=, <)
-IMPLEMENT_FILTER_LEN_RANGE(gele, >=, <=)
+  LogMessage *msg = msgs[num_msg - 1];
+  const gchar *message_part = log_msg_get_value(msg, LM_V_MESSAGE, NULL);
+  result = ((gint) strlen(message_part) > self->min) &&
+           ((gint) strlen(message_part) < self->max);
+  return result ^ s->comp;
+}
+
+FilterExprNode *
+filter_len_gtlt_new(gint min, gint max)
+{
+  FilterLengthRange *self = g_new0(FilterLengthRange, 1);
+  filter_expr_node_init_instance(&self->super);
+  self->super.eval = filter_len_gtlt_eval;
+  self->min = min;
+  self->max = max;
+  return &self->super;
+}
 ```
 
 
