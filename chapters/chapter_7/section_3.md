@@ -354,7 +354,7 @@ _clone(LogPipe *s)
 #include <criterion/criterion.h>
 ```
 
-This global variable is declared in order to use the same `OrderedParser` throughout each stage of the testing process (setup, unit testing, teardown).
+This global variable is declared in order to use the same `OrderedParser` throughout each stage of the testing process (setup, unit testing, teardown). Note, however, that globals are not actually shared between individual tests.
 ```
 LogParser *ordered_parser;
 ```
@@ -426,6 +426,8 @@ The general structure for our unit tests is as follows:
 1. Set any ordered-parser options or flags.
 2. Call the parse function we wrote above, with our `${MESSAGE}` to test.
 3. Call the `libtest/` assert function to check that our message was properly parsed.
+
+When testing involves repeating the same logic over different sets of parameters, it is usually a good idea to use Criterion's parameterized tests. This is covered in the filter function section of this guide.
 ```
 Test(ordered_parser, basic_default)
 {
