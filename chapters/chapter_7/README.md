@@ -28,7 +28,7 @@ Syslog-ng supports Automake and CMake for compilation. Writing the compilation f
 
 ## How this Guide Works
 
-The first section contains information about programming modules and plugins in general.
+The first section contains information about creating modules and plugins, in general.
 
 The following sections are guides for creating specific plugins. Each guide goes through the files of an example plugin, explaining things on the way. Explanations will either be an in-code comment, for small but useful information, or an out-of-code text, for central information or complex information.
 
