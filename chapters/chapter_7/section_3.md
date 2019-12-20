@@ -319,8 +319,10 @@ Next we have the main parsing loop. It tells the scanner to move on to the next 
       const gchar *current_value = kv_scanner_get_current_value(&kv_scanner);
       log_msg_set_value_by_name(*pmsg, current_key, current_value, -1);
     }
-
+    
+  kv_scanner_deinit(&kv_scanner);
   g_free(formatted_input);
+
   return TRUE;
 }
 ```
