@@ -8,7 +8,7 @@ This chapter is a guide for creating syslog-ng plugins.
 You should be able to program in C and be familiar with object-oriented programming.
 
 ### syslog-ng
-You should understand how syslog-ng—and especially its plugins—work, from a user perspective.
+You should understand how syslog-ng works, from a user perspective (especially plugins).
 Recommended reading: [syslog-ng OSE Administration Guide](https://www.syslog-ng.com/technical-documents/list/syslog-ng-open-source-edition/)
 
 ### Bison
