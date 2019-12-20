@@ -11,7 +11,7 @@ A module contains:
 * `*-plugin.c`, a file which defines the module
 * `*-grammar.ym`, a Bison grammar file
 * `*-parser.[ch]`, a file which handles the module's parsing
-* `*.[ch]`, optional plugin and plugin helper files
+* `*.[ch]`, plugin and plugin helper files
 * `Makefile.am`, an Automake file
 * `CMakeLists.txt`, a CMake file
 * `tests/`, a test directory
