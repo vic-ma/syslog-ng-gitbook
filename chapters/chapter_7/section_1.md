@@ -159,7 +159,7 @@ This is the Bison parser that comes from the generated implementation file.
 int affile_parse(CfgLexer *lexer, LogDriver **instance, gpointer arg);
 ```
 
-The lexer for the module's parser needs a list of keywords to recognize, so we create an array of `CfgLexerKeyword` objects. These are defined by the string to recognize, along with the corresponding token's numerical code. The tokens are defined in the `*-grammar.ym` file and Bison makes their numerical codes availible through a macro of the same name, so that is what we use. The array is null-terminated.
+The lexer for the module's parser needs a list of keywords to recognize, so we create an array of `CfgLexerKeyword` objects. These are defined by the string to recognize, along with the corresponding token's numerical code. The tokens are defined in the `*-grammar.ym` file and Bison makes their numerical codes available through a macro of the same name, so that is what we use. The array is null-terminated.
 
 The keywords of modules include those that declare the use of the plugins (the first block here), as well as those that set the options for the plugins (the other blocks here).
 ```
