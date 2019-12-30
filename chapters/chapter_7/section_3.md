@@ -1,4 +1,3 @@
-
 # Parser
 
 This section will guide you through the process of creating a parser plugin, by going through the files of `ordered-parser`, which parses an ordered list by creating macros for each item in the list.
@@ -6,7 +5,9 @@ This section will guide you through the process of creating a parser plugin, by 
 For example:
 `A) Apple B) Banana C) Cherry -> ${A}="Apple", ${B}="Banana, ${C}="Cherry"`
 
-This parser supports one option, `suffix`, which lets the user choose what suffix their ordered lists use (`A) B) C)` vs. `A: B: C:`).
+This parser supports an option `suffix`, which lets the user choose what suffix their ordered lists use (`A) B) C)` vs. `A: B: C:`).
+
+This parser also supports the option `prefix`, which allows the user to add a prefix before the generated macro names (so you could have `${orderedparser.A}` for example). This is a standard option for parsers. It is useful for avoiding macro collisions.
 
 This parser also supports two flags, `letters` and `numbers`, which lets the user choose what symbols their ordered lists use (`A) B) C)` vs. `1) 2) 3)`).
 
@@ -64,7 +65,7 @@ extern int ordered_parser_debug;
 int ordered_parser_parse(CfgLexer *lexer, LogParser **instance, gpointer arg);
 ```
 
-Here we have the keyword for the plugin itself, but we also add an additional keyword for the suffix option.
+Here we have the keyword for the plugin itself, but we also add an additional keyword for the suffix and prefix options.
 ```
 static CfgLexerKeyword ordered_parser_keywords[] =
 {
@@ -146,6 +147,8 @@ Here we add an option for flags (which are handled in the next block).
 
 Since ordered-parser supports the `suffix` option, we need to implement that too. We first make two calls to the `CHECK_ERROR` macro, to make sure the input is a valid suffix. Then we call our setter function.
 
+For our `prefix` option, we just need to call the setter function.
+
 Finally, we add `parser_opt`, which is a standard option to include for parsers.
 ```
 parser_ordered_opt
@@ -205,7 +208,7 @@ LogParser *ordered_parser_new(GlobalConfig *cfg);
 gboolean ordered_parser_process_flag(LogParser *s, const gchar *flag);
 gboolean ordered_parser_suffix_valid(gchar suffix);
 void ordered_parser_set_suffix(LogParser *s, gchar suffix);
-void  ordered_parser_set_prefix(LogParser *s, gchar *prefix);
+void ordered_parser_set_prefix(LogParser *s, gchar *prefix);
 
 #endif
 ```
@@ -291,6 +294,8 @@ ordered_parser_set_prefix(LogParser *s, gchar *prefix)
 {
   OrderedParser *self = (OrderedParser *) s;
 
+  /* prefix_len is needed due to the way the prefix+macro name is generated */
+
   g_free(self->prefix);
   if (prefix)
     {
@@ -314,6 +319,18 @@ _format_input(const gchar *input, gchar suffix)
 }
 ```
 
+This function is called to get the macro name with any formatting necessary.
+```
+static const gchar *
+_get_formatted_key(OrderedParser *self, const gchar *key, GString *formatted_key)
+{
+  if (!self->prefix)
+    return key;
+  return _get_formatted_key_with_prefix(self, key, formatted_key);
+}
+```
+
+This function prepends the prefix to the macro name.
 ```
 static const gchar *
 _get_formatted_key_with_prefix(OrderedParser *self, const gchar *key, GString *formatted_key)
@@ -324,14 +341,6 @@ _get_formatted_key_with_prefix(OrderedParser *self, const gchar *key, GString *f
     g_string_assign(formatted_key, self->prefix);
   g_string_append(formatted_key, key);
   return formatted_key->str;
-}
-
-static const gchar *
-_get_formatted_key(OrderedParser *self, const gchar *key, GString *formatted_key)
-{
-  if (!self->prefix)
-    return key;
-  return _get_formatted_key_with_prefix(self, key, formatted_key);
 }
 ```
 
@@ -351,6 +360,8 @@ _process(LogParser *s, LogMessage **pmsg, const LogPathOptions *path_options,
 
   /* Initialize scanner by passing in value and pair separators */
   kv_scanner_init(&kv_scanner, self->suffix, " ", FALSE);
+  
+  /* For efficiency reasons a "scratch buffer" is used to hold the macro name */
   GString *formatted_key = scratch_buffers_alloc();
 
   /* Delete spaces after suffix and pass input to KVScanner */
@@ -385,16 +396,6 @@ Next we have the main parsing loop. It tells the scanner to move on to the next 
 
 Finally we need to implement the clone function, which is called when the same parser is used in multiple log paths.
 ```
-LogPipe *
-ordered_parser_clone_method(OrderedParser *dst, OrderedParser *src)
-{
-  ordered_parser_set_suffix(&dst->super, src->suffix);
-  ordered_parser_set_prefix(&dst->super, src->prefix);
-  dst->flags = src->flags;
-
-  return &dst->super.super;
-}
-
 static LogPipe *
 _clone(LogPipe *s)
 {
@@ -405,6 +406,17 @@ _clone(LogPipe *s)
 
   return ordered_parser_clone_method(cloned, self);
 }
+
+LogPipe *
+ordered_parser_clone_method(OrderedParser *dst, OrderedParser *src)
+{
+  ordered_parser_set_suffix(&dst->super, src->suffix);
+  ordered_parser_set_prefix(&dst->super, src->prefix);
+  dst->flags = src->flags;
+
+  return &dst->super.super;
+}
+
 
 static void
 _free(LogPipe *s)
