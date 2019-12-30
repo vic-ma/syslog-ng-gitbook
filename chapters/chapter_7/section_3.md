@@ -1,3 +1,4 @@
+
 # Parser
 
 This section will guide you through the process of creating a parser plugin, by going through the files of `ordered-parser`, which parses an ordered list by creating macros for each item in the list.
@@ -69,6 +70,7 @@ static CfgLexerKeyword ordered_parser_keywords[] =
 {
   { "example_ordered_parser", KW_ORDERED_PARSER },
   { "suffix",                 KW_SUFFIX },
+  { "prefix",                 KW_PREFIX },
   { NULL }
 };
 
@@ -113,6 +115,7 @@ CFG_PARSER_IMPLEMENT_LEXER_BINDING(ordered_parser_, LogParser **)
 
 %token  KW_ORDERED_PARSER
 %token  KW_SUFFIX
+%token  KW_PREFIX
 
 %type <ptr> parser_expr_ordered
 
@@ -154,6 +157,11 @@ parser_ordered_opt
         ordered_parser_set_suffix(last_parser, $3[0]);
         free($3);
       }
+    | KW_PREFIX '(' string ')'
+      {
+        ordered_parser_set_prefix(last_parser, $3);
+        free($3);
+      }
     | parser_opt
     ;
 ```
@@ -188,6 +196,8 @@ typedef struct _OrderedParser
 {
   LogParser super;
   gchar suffix;
+  gchar *prefix;
+  gsize prefix_len;
   guint32 flags;
 } OrderedParser;
 
@@ -195,6 +205,7 @@ LogParser *ordered_parser_new(GlobalConfig *cfg);
 gboolean ordered_parser_process_flag(LogParser *s, const gchar *flag);
 gboolean ordered_parser_suffix_valid(gchar suffix);
 void ordered_parser_set_suffix(LogParser *s, gchar suffix);
+void  ordered_parser_set_prefix(LogParser *s, gchar *prefix);
 
 #endif
 ```
@@ -204,6 +215,7 @@ void ordered_parser_set_suffix(LogParser *s, gchar suffix);
 ```
 #include "ordered-parser.h"
 #include "scanner/kv-scanner/kv-scanner.h"
+#include "scratch-buffers.h"
 
 LogParser *
 ordered_parser_new(GlobalConfig *cfg)
@@ -216,6 +228,7 @@ ordered_parser_new(GlobalConfig *cfg)
   /* Set methods */
   self->super.process = _process;
   self->super.super.clone = _clone;
+  self->super.super.free_fn = _free;
 
   /* Set default options */
   self->suffix = ')';
@@ -273,6 +286,24 @@ ordered_parser_set_suffix(LogParser *s, gchar suffix)
   self->suffix = suffix;
 }
 
+void
+ordered_parser_set_prefix(LogParser *s, gchar *prefix)
+{
+  OrderedParser *self = (OrderedParser *) s;
+
+  g_free(self->prefix);
+  if (prefix)
+    {
+      self->prefix = g_strdup(prefix);
+      self->prefix_len = strlen(prefix);
+    }
+  else
+    {
+      self->prefix = NULL;
+      self->prefix_len = 0;
+    }
+}
+
 static char *
 _format_input(const gchar *input, gchar suffix)
 {
@@ -280,6 +311,27 @@ _format_input(const gchar *input, gchar suffix)
    * Prepare input for scanning; specific to ordered-parser.
    * Can be ignored.
    */
+}
+```
+
+```
+static const gchar *
+_get_formatted_key_with_prefix(OrderedParser *self, const gchar *key, GString *formatted_key)
+{
+  if (formatted_key->len > 0)
+    g_string_truncate(formatted_key, self->prefix_len);
+  else
+    g_string_assign(formatted_key, self->prefix);
+  g_string_append(formatted_key, key);
+  return formatted_key->str;
+}
+
+static const gchar *
+_get_formatted_key(OrderedParser *self, const gchar *key, GString *formatted_key)
+{
+  if (!self->prefix)
+    return key;
+  return _get_formatted_key_with_prefix(self, key, formatted_key);
 }
 ```
 
@@ -299,6 +351,7 @@ _process(LogParser *s, LogMessage **pmsg, const LogPathOptions *path_options,
 
   /* Initialize scanner by passing in value and pair separators */
   kv_scanner_init(&kv_scanner, self->suffix, " ", FALSE);
+  GString *formatted_key = scratch_buffers_alloc();
 
   /* Delete spaces after suffix and pass input to KVScanner */
   gchar *formatted_input = _format_input(input, self->suffix);
@@ -308,6 +361,7 @@ _process(LogParser *s, LogMessage **pmsg, const LogPathOptions *path_options,
   log_msg_make_writable(pmsg, path_options);
   msg_trace("ordered-parser message processing started",
             evt_tag_str ("input", input),
+            evt_tag_str ("prefix", self->prefix),
             evt_tag_printf("msg", "%p", *pmsg));
 ```
 
@@ -317,7 +371,9 @@ Next we have the main parsing loop. It tells the scanner to move on to the next 
     {
       const gchar *current_key = kv_scanner_get_current_key(&kv_scanner);
       const gchar *current_value = kv_scanner_get_current_value(&kv_scanner);
-      log_msg_set_value_by_name(*pmsg, current_key, current_value, -1);
+      log_msg_set_value_by_name(*pmsg,
+                                _get_formatted_key(self, current_key, formatted_key),
+                                current_value, -1);
     }
     
   kv_scanner_deinit(&kv_scanner);
@@ -329,6 +385,16 @@ Next we have the main parsing loop. It tells the scanner to move on to the next 
 
 Finally we need to implement the clone function, which is called when the same parser is used in multiple log paths.
 ```
+LogPipe *
+ordered_parser_clone_method(OrderedParser *dst, OrderedParser *src)
+{
+  ordered_parser_set_suffix(&dst->super, src->suffix);
+  ordered_parser_set_prefix(&dst->super, src->prefix);
+  dst->flags = src->flags;
+
+  return &dst->super.super;
+}
+
 static LogPipe *
 _clone(LogPipe *s)
 {
@@ -337,11 +403,15 @@ _clone(LogPipe *s)
   OrderedParser *cloned;
   cloned = (OrderedParser *) ordered_parser_new(log_pipe_get_config(s));
 
-  cloned->super = self->super;
-  cloned->suffix = self->suffix;
-  cloned->flags = self->flags;
+  return ordered_parser_clone_method(cloned, self);
+}
 
-  return &cloned->super.super;
+static void
+_free(LogPipe *s)
+{
+  OrderedParser *self = (OrderedParser *) s;
+
+  g_free(self->prefix);
 }
 ```
 
