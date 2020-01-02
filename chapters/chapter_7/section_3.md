@@ -37,6 +37,10 @@ log {
 };
 ```
 
+### UML Diagram
+
+![](https://i.imgur.com/vhVizEX.png)
+
 ### `ordered-parser-parser.h`
 
 ```
