@@ -15,6 +15,10 @@ log {
 };
 ```
 
+### UML Diagram
+
+![](https://i.imgur.com/alNhdDK.png)
+
 ### `static-file-parser.h`
 
 ```
