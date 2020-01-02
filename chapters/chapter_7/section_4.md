@@ -28,6 +28,10 @@ log {
 };
 ```
 
+### UML Diagram
+
+![](https://i.imgur.com/X3w29kA.png)
+
 ### `filter-expr-parser.c`
 
 This is the parser file for filter functions. We add a `CfgLexerKeyword` for each of our filter functions to the list of keywords.
