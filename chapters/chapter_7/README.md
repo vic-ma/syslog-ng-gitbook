@@ -32,4 +32,4 @@ The first section contains information about creating modules and plugins, in ge
 
 The following sections are guides for creating specific types of plugins. Each guide goes through the files of an example plugin, explaining things along the way. An explanation will either be an in-code comment, for small but useful information, or an out-of-code paragraph, for central or complex information.
 
-Comments apply downward; that is, they talk about the code below them.
+Explanations apply downward; that is, they talk about the code below them.
