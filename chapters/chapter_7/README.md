@@ -16,11 +16,11 @@ You should understand the basics of GNU Bison: how Bison is used to parse text, 
 Recommended reading: [Bison Manual](https://www.gnu.org/software/bison/manual/)
 
 ### GLib
-You do not need to know anything about GLib except that syslog-ng uses it, and so you should be prepared to look up its documentation when needed. The manual is linked below, but it is probably easier to use a search engine when looking for specific docs (e.g. "Glib GString").
+You do not need to know anything about GLib except that syslog-ng uses it, and so you should be prepared to look up its documentation when needed. A link to the manual follows, but it is probably easier to use a search engine when looking for specific docs (e.g. by searching "Glib GString").
 Recommended reading: [GLib Reference Manual](https://developer.gnome.org/glib/)
 
 ### Criterion
-Syslog-ng uses the Criterion test framework, so you should know how to work with it.
+Syslog-ng uses the Criterion unit testing framework, so you should know how to work with it.
 Recommended reading: [Criterion Docs](https://criterion.readthedocs.io/)
 
 ### Automake/CMake
@@ -32,14 +32,4 @@ The first section contains information about creating modules and plugins, in ge
 
 The following sections are guides for creating specific types of plugins. Each guide goes through the files of an example plugin, explaining things along the way. An explanation will either be an in-code comment, for small but useful information, or an out-of-code paragraph, for central or complex information.
 
-Each comment (in-text or out) only applies to the code that immediately follows it. So for example, the following explanation only applies to the first line of code:
-
----
-
-Create a new `LogPipe` based on the user's config file.
-
-```
-LogPipe *lp = log_pipe_new(configuration);
-
-log_pipe_unref(lp);
-```
+Comments apply downward; that is, they talk about the code below them.
