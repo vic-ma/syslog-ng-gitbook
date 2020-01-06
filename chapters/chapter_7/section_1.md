@@ -10,7 +10,7 @@ Modules are stored in `modules/` as directories (e.g. `modules/affile/`). Inside
 A module contains:
 * `*-plugin.c`, a file which defines the module
 * `*-grammar.ym`, a Bison grammar file
-* `*-parser.[ch]`, a file which handles the module's parsing
+* `*-parser.[ch]`, files which handle the module's parsing
 * `*.[ch]`, plugin and plugin helper files
 * `Makefile.am`, an Automake file
 * `CMakeLists.txt`, a CMake file
@@ -36,19 +36,21 @@ The purpose of the plugin file is to integrate a module and its plugins into sys
 extern CfgParser affile_parser;
 ```
 
-Syslog-ng needs a list of the module's plugins, in the form of `Plugin` objects, so it knows how to parse them in the configuration file. `Plugin` objects are defined by:
+Syslog-ng needs a list of the module's plugins, in the form of `Plugin` objects, so the syslog-ng parser knows how to parse them in the configuration file. `Plugin` objects are defined by:
 
 1. A `type` field, which is the context/block a plugin belongs in (source, destination, parser, etc.) This is set to one of the tokens defined under `lib/cfg-grammar.y` (e.g. `LL_CONTEXT_SOURCE`).
 2. A `name` field, which is the string used to declare the use of the plugin.
 3. A `parser` field, which is the `CfgParser` used to parse the plugin. Usually this is just the `CfgParser` for the module.
 
 When the syslog-ng parser encounters `name` inside a context/block of the type, `type`, it will use `parser` to parse the block.
+
+In this snippet of a config file, for example, the syslog-ng parser sees that it is inside a source context/block (`LL_CONTEXT_SOURCE`), and finds the string `file`, so it uses the parser for that plugin, which is `affile_parser`, to parse the configuration block.
+
 ```
 source s_local {
     file("/var/log/syslog");
 };
 ```
-The syslog-ng parser sees that it is inside a source context/block (`LL_CONTEXT_SOURCE`), and finds the string `file`, so it uses the parser for that plugin, which is `affile_parser`, to parse the configuration block.
 
 The `affile` module contains many plugins, so its list is pretty long, but most modules only have one or two `Plugin` objects in their lists.
 ```
@@ -210,16 +212,13 @@ CFG_PARSER_IMPLEMENT_LEXER_BINDING(affile_, LogDriver **)
 
 ## Structs as Classes
 
-/* TODO */
+Syslog-ng is written in C but simulates the funcitonality of classes and objects by using structs. 
 
-Syslog-ng is written in C but simulates some object-oriented programming features. It is important to know a bit about how this is done, before going into plugin programming.
+The first field of any struct that represents a subclass is `super`. The type of `super` is the struct that represents the superclass. This type is not a pointer.
 
-Structs are used to represent classes. The first field of any struct that represents a subclass is `super`. The type of `super` is the struct that represents the superclass. This type is not a pointer.
-
-The result of making `super` the first field and not a pointer is that an object will have all the data for it and its superclasses stored in one contiguous block of memory, ordered from most abstract to the least. If `C` inherits from `B` inherits from `A`, the memory layout of a `C` object would look like:
+The result of making `super` the first field and not a pointer is that an object will have all the data for it and its superclasses stored in one contiguous block of memory, ordered from most abstract to the least. So if `C` inherits from `B` inherits from `A`, the memory layout of a `C` object would look like:
 ```
-[[[Members for A] Members for B] Members for C]
+[[[Members of A] Members of B] Members of C]
 ```
 
-This fact allows us to access the members of an object's superclasses with the dot operator, which allows for inheritence. We can also convert between classes with casts, which allows for polymorphism. Let's take a look at both these things with an example.
-
+The best way to learn how this is used in practice is to look at and work with the codebase.
