@@ -93,9 +93,9 @@ tf_radix_dec(LogMessage *msg, gint argc, GString *argv[], GString *result)
     const gchar *tf_name = "($dec)";
     if (!_check_argc(argc, tf_name))
       return;
-    gchar *endptr = g_malloc(argv[0]->len);
+    gchar *endptr;
     errno = 0;
-    glong original = strtol(argv[0]->str, NULL, 0);
+    glong original = strtol(argv[0]->str, &endptr, 0);
     if (!_check_strtol_result(endptr, tf_name))
       return;
     g_string_append_printf(result, "%ld", original);

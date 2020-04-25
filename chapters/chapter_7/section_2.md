@@ -134,7 +134,7 @@ source_static_file
   ;
 ```
 
-This rule says that the parameters for `static-file` will always begin with a string. This string is the pathname of the static file. With this string, we can call our function to create a new `static-file` source driver. `instance` is used to return the new driver back to the caller. `configuration` is the `GlobalCfg` that represents the user's config file.
+This rule says that the parameters for `static-file` will always begin with a string. This string is the pathname of the static file. With this string, we can call our function to create a new `static-file` source driver. `instance` is used to return the new driver back to the caller. `configuration` is the `GlobalConfig` that represents the user's config file.
 
 The midrule in this rule says that after the string for the pathname are options for the `static-file` driver.
 ```

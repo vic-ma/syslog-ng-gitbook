@@ -194,7 +194,7 @@ typedef struct _FilterLengthRange
 } FilterLengthRange;
 ```
 
-In the actual code, we use a macro function to generate the code needed for our filter functions, since for each type (single and range) the only thing that changes is the comparison operator(s) used. But for this guide we will just look at a single example of each type, implemented without the any macros.
+In the actual code, we use a macro function to generate the code needed for our filter functions, since for each type (single and range) the only thing that changes is the comparison operator(s) used. But for this guide we will just look at a single example of each type, implemented without any macros.
 
 First we have the `new` function for our single comparison filter functions. Our filter function does not have anything that needs to be initialised, nor any fields that use dynamic memory, so we only implement and set the `eval` method, not `init` or `free_fn`.
 ```
