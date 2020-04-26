@@ -38,7 +38,7 @@ extern CfgParser affile_parser;
 
 Syslog-ng needs a list of the module's plugins, in the form of `Plugin` objects, so the syslog-ng parser knows how to parse them in the configuration file. `Plugin` objects are defined by:
 
-1. A `type` field, which is the context/block a plugin belongs in (source, destination, parser, etc.) This is set to one of the tokens defined under `lib/cfg-grammar.y` (e.g. `LL_CONTEXT_SOURCE`).
+1. A `type` field, which is the context/block a plugin belongs in (source, destination, parser, etc.). This is set to one of the tokens defined under `lib/cfg-grammar.y` (e.g. `LL_CONTEXT_SOURCE`).
 2. A `name` field, which is the string used to declare the use of the plugin.
 3. A `parser` field, which is the `CfgParser` used to parse the plugin. Usually this is just the `CfgParser` for the module.
 
